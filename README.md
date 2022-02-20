@@ -2,3 +2,5 @@
 GUI 2 Group 8 Project
 
 Cam Benassi
+
+Tere Kwong
