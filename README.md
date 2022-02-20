@@ -1,5 +1,5 @@
 # Capitol-Gains
 GUI 2 Group 8 Project
 
-Cam Benassi \n
+Cam Benassi  
 Alvin Tran
