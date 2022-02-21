@@ -9,4 +9,6 @@ Tere Kwong
 
 Ethan Yu  
 
+Joshua Sullivan
+
 Brandon Swanberg
