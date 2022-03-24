@@ -2,7 +2,7 @@
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
-const Trade = require('../models/blog'); 
+const Trade = require('../models/blog');
 
 // register view engine
 app.set('view engine', 'ejs');
