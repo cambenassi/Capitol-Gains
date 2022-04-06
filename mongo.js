@@ -12,7 +12,7 @@ date += "-" + d.getDate() + "-" + d.getFullYear();
 //connect to db
 async function connectToDB(){
     //heroku env variable
-    const dbURI = process.env.DB_CON_STRING;
+    const dbURI = "mongodb+srv://cam:GUIGroup8@cluster0.qc8sf.mongodb.net/senate-trades?retryWrites=true&w=majority";
     const client = new MongoClient(dbURI);
 
     try{
