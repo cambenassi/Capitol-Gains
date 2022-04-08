@@ -70,17 +70,17 @@ async function getDataVirtualDatabase(dataSlug) {
 
 // DESCRIPTION: takes a mongodb call
 // PROTOTYPE:
-async function getMongoRequest(dataSlug) {
+async function getMongoRequest() {
 }
 
 // DESCRIPTION: takes an API call to ProPublica API
 // PROTOTYPE:
-async function getProPublicaRequest(dataSlug) {
+async function getProPublicaRequest() {
 }
 
 // DESCRIPTION: takes an API call to Polygon.io
 // PROTOTYPE:
-async function getPolygon(dataSlug) {
+async function getPolygon() {
 }
 
 /*
