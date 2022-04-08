@@ -1,5 +1,6 @@
 const { MongoClient } = require('mongodb');
 const _ = import('lodash');
+const fetch = require('node-fetch')
 
 // public functions
 module.exports = {
@@ -48,7 +49,8 @@ async function getDataVirtualDatabase(dataSlug) {
 
     // sample/depreciated data request using hardcoded json
     if (dataSlug.requestType == "uniqueCongress") {
-        return getPoliticians();
+        //return getPoliticians();
+        return getProPublicaRequest();
     } else if (dataSlug.requestType == "congressById") {
         return getPolitician(dataSlug.requestData.id);
     } else if (dataSlug.requestType == "testMongo") {
@@ -76,6 +78,56 @@ async function getMongoRequest() {
 // DESCRIPTION: takes an API call to ProPublica API
 // PROTOTYPE:
 async function getProPublicaRequest() {
+    if (HouseMemberData && SenateMemberData) {
+        return "TEST1";
+    }
+
+    return "TEST2";
+}
+
+/*
+    Sub calls for ProPublica request
+*/
+// when server starts, grab HouseMemberData and put it into the global variable
+getHouseMemberData().then(data => {
+    console.log('Server-side: Grabbing HouseMemberData through an API call and putting it into a global variable.');
+    HouseMemberData = data;
+})
+
+// when server starts, grab SenateMemberData and put it into the global variable
+getSenateMemberData().then(data => {
+    console.log('Server-side: Grabbing SenateMemberData through an API call and putting it into a global variable.');
+    SenateMemberData = data;
+})
+
+// async function to fetch house member data from ProPublica
+async function getHouseMemberData() {
+    const propublica_house_url = "https://api.propublica.org/congress/v1/117/house/members.json";
+    const response = await fetch(propublica_house_url, {
+        method: "GET",  // gets data
+        headers: {
+            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
+        }
+    })
+    const data = await response.json();
+    var HouseMemberData = data.results[0].members;
+
+    return HouseMemberData;
+}
+
+// async function to fetch senate member data from ProPublica
+async function getSenateMemberData() {
+    const propublica_senate_url = "https://api.propublica.org/congress/v1/117/senate/members.json";
+    const response = await fetch(propublica_senate_url, {
+        method: "GET",
+        headers: {
+            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
+        }
+    })
+    const data = await response.json();
+    var SenateMemberData = data.results[0].members;
+
+    return SenateMemberData;
 }
 
 // DESCRIPTION: takes an API call to Polygon.io
