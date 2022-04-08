@@ -32,8 +32,9 @@ export default function Politicians() {
       // fetch request to server API
       console.log("Sending api request...");
       console.log(dataSlugMongoTest);
-      // const response = await fetch('http://localhost:5000/apiTEST', options);
-      // console.log(response.message);
+      const response = await fetch('http://localhost:5000/api', options);
+      console.log("Got a response!");
+      console.log(response);
     }
 
     // call async function to get data
