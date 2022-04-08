@@ -29,15 +29,13 @@ export default function Politicians() {
         body: JSON.stringify(dataSlugMongoTest)
       }
 
-      // fetch request to server API
-      console.log("Sending api request...");
-      console.log(dataSlugMongoTest);
+      // make api call
       const response = await fetch('http://localhost:5000/api', options);
-      console.log("Got a response!");
-      console.log(response);
+      // get response object as json
+      const body = await response.json();
+      console.log(body.message);
     }
 
-    // call async function to get data
     getPoliticiansUnique();
   });
 
