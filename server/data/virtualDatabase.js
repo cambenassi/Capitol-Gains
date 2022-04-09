@@ -8,7 +8,6 @@ module.exports = {
     // PROTOTYPE: sent a json w/ type of request and any data needed to make request
     getData: async function (dataSlug) {
         const data = await getDataVirtualDatabase(dataSlug);
-        //console.log("IN getData:", data);
         return data;
     }
 }
@@ -50,8 +49,8 @@ async function getDataVirtualDatabase(dataSlug) {
 
     // sample/depreciated data request using hardcoded json
     if (dataSlug.requestType == "uniqueCongress") {
-        //return getPoliticians();
-        getDataVirtualDatabase_data = await getProPublicaRequest();
+        return getPoliticians();
+        //getDataVirtualDatabase_data = await getProPublicaRequest();
         //console.log("IN getDataVirtualDatabase:", getDataVirtualDatabase_data);
         return getDataVirtualDatabase_data;
     } else if (dataSlug.requestType == "congressById") {
@@ -80,6 +79,9 @@ async function getMongoRequest() {
 
 // DESCRIPTION: takes an API call to ProPublica API and returns a json object containing politician's bio
 // PROTOTYPE:
+
+
+// NOTE TO SELF: MAYBE GET FULL LIST HOUSEMEMBERDATA AND SENATEMEMBERDATA IN THIS REQUEST, THEN MOVE THE TASKS TO THE VIRTUAL DATA REQUESTS LIKE POLITICIAN BIO
 async function getProPublicaRequest() {
     if (HouseMemberData && SenateMemberData) {
         var first_name = "Mitch";
@@ -95,7 +97,7 @@ async function getProPublicaRequest() {
                 const PoliticianBio = await getPoliticianBio(member_id);
                 //console.log(test_data);
 
-                let test_data = [{
+                let test_data = {
                     id: PoliticianBio.id,
                     politician_bio: {
                         FirstName: PoliticianBio.first_name,
@@ -107,7 +109,7 @@ async function getProPublicaRequest() {
                         Committees: PoliticianBio.roles[0].committees,
                         Subcommittees: PoliticianBio.roles[0].subcommittees
                     }
-                }];
+                };
 
                 return test_data;
 
@@ -133,8 +135,6 @@ async function getProPublicaRequest() {
                     return test_data;
                     
                 })*/
-                console.log("OUTSIDE .THEN getProPublicaRequest:", test_data);
-                return test_data;
             } else {
                 console.log('Server-side: The name is invalid so a member_id does not exist.')
                 console.log('Server-side: Sending a failure response back to the client-side\n')
@@ -155,6 +155,7 @@ async function getProPublicaRequest() {
 /*
     SUB CALLS FOR PROPUBLICA REQUEST
 */
+
 // when server starts, grab HouseMemberData and put it into the global variable
 getHouseMemberData().then(data => {
     console.log('Server-side: Grabbing HouseMemberData through ProPublica API call and putting it into a global variable.');
@@ -166,6 +167,8 @@ getSenateMemberData().then(data => {
     console.log('Server-side: Grabbing SenateMemberData through ProPublica API call and putting it into a global variable.');
     SenateMemberData = data;
 })
+
+
 
 // async function to fetch house member data from ProPublica
 async function getHouseMemberData() {
@@ -314,3 +317,8 @@ function getPolitician(id) {
         (politician) => politician.id === id
     );
 }
+
+(async() => {
+    let variable = await getProPublicaRequest();
+    console.log(variable);
+})()
