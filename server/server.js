@@ -1,6 +1,7 @@
 const express = require('express');
 var cors = require('cors');
 const app = express();
+var path = require('path');
 
 const virtualDatabase = require('./data/virtualDatabase.js');
 
