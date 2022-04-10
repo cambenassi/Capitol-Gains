@@ -13,18 +13,6 @@ const port = process.env.PORT || 5000;
 app.listen(port, () => console.log('listening at 5000'));
 app.use(express.static('public'));
 
-//Routing - directing to build/index.html then sending routing requests to react 
-if (process.env.NODE_ENV === 'production') {
-    // Serve any static files
-    app.use(express.static(path.join(__dirname, 'client/build')));
-      
-    // Handle React routing, return all requests to React app
-    app.get('*', function(req, res) {
-      res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
-    });
-}
-
-
 // API CODE
 app.use(express.json({ limit: '1mb' }));
 
