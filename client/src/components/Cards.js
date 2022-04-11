@@ -154,7 +154,7 @@ function Cards() {
               <ul className='cards__items'>
               {politicians.map((politician) => (
                 <CardItem
-                  src={Placeholder}
+                  src={politician.photo}
                   text={politician.name}
                   path={`/politician/${politician.id}`}
                   key={politician.id}
