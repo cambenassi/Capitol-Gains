@@ -1,6 +1,9 @@
 const { MongoClient } = require('mongodb');
 const _ = import('lodash');
 const fetch = require('node-fetch')
+const dotenv = require('dotenv');
+dotenv.config();
+
 
 // public functions
 module.exports = {
@@ -49,7 +52,9 @@ async function getDataVirtualDatabase(dataSlug) {
 
     // sample/depreciated data request using hardcoded json
     if (dataSlug.requestType == "uniqueCongress") {
-        getMongoRequest();
+        console.log("SPOT1")
+        await getMongoRequest();
+        console.log("SPOT3")
         return 1;
     } else if (dataSlug.requestType == "politicianById") {
         return getPolitician(dataSlug.requestData.id);
@@ -78,13 +83,16 @@ async function uniqueCongress() {
 // DESCRIPTION: takes a mongodb call
 // PROTOTYPE:
 async function getMongoRequest() {
+    console.log("HELLO");
     const uri = process.env.DB_CON_STRING;
+    console.log(uri);
     const client = new MongoClient(uri);
 
     try {
         console.log("Connecting...");
         await client.connect();
         //const data = await
+        console.log("SPOT2");
         console.log(client);
     } catch (e) {
         console.error(e);
