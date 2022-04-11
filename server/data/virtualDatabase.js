@@ -52,9 +52,7 @@ async function getDataVirtualDatabase(dataSlug) {
 
     // sample/depreciated data request using hardcoded json
     if (dataSlug.requestType == "uniqueCongress") {
-        console.log("SPOT1")
         await getMongoRequest();
-        console.log("SPOT3")
         return 1;
     } else if (dataSlug.requestType == "politicianById") {
         return getPolitician(dataSlug.requestData.id);
@@ -83,23 +81,111 @@ async function uniqueCongress() {
 // DESCRIPTION: takes a mongodb call
 // PROTOTYPE:
 async function getMongoRequest() {
-    console.log("HELLO");
-    const uri = process.env.DB_CON_STRING;
-    console.log(uri);
+    //const uri = process.env.DB_CON_STRING;
+    //const uri = "mongodb+srv://cam:GUIGroup8@cluster0.qc8sf.mongodb.net/senate-trades?retryWrites=true&w=majority";
+    const uri = "mongodb://localhost:27017";
+    
+    console.log("THIS IS THE URI!!!:", uri);
     const client = new MongoClient(uri);
 
     try {
         console.log("Connecting...");
         await client.connect();
-        //const data = await
-        console.log("SPOT2");
-        console.log(client);
+        //const uniqueSenate = await getUniqueSenateSW(client);
+        //console.log("IN getMongoRequest():", uniqueSenate);
+        //return uniqueSenate;
+        //console.log(await client.db("congressStockWatcher").collection("senateStockWatcher").distinct("first_name"));
+
+        const uniqueHouse = await getUniqueHouseSW(client);
+        console.log("IN getMongoRequest():", uniqueHouse);
+        return uniqueHouse;
+        //console.log(await client.db("congressStockWatcher").collection("houseStockWatcher").distinct("representative"));
     } catch (e) {
         console.error(e);
     } finally {
         // Close connection to MongoDB cluster
         await client.close();
     }
+}
+
+/*
+    SUB CALLS FOR MONGODB REQUEST
+*/
+/*
+async function getUniqueSenateSW(client) {
+    var uniqueSenate = [];
+    var uniqueSenateFirstNames = await client.db("congressStockWatcher").collection("senateStockWatcher").distinct("first_name");
+
+    var count = 0;
+    uniqueSenateFirstNames.forEach(aFirstName => {
+        var jsonData = {};
+        var id = {};
+        var mapping = {};
+        var firstName = "firstNameStockWatcher";
+        var lastName = "lastNameStockWatcher";
+
+        test = client.db.senateStockWatcher.aggregate([{ $match : {"first_name": aFirstName}}]);
+        console.log("TEST:", test);
+
+        id = count;
+        mapping[firstName] = aFirstName;
+        mapping[lastName] = null;
+        jsonData = {id, mapping};
+        uniqueSenate.push(jsonData);
+
+        count += 1;
+    });
+
+    
+    {
+        "id": 0,  
+        "mapping": {
+            "firstNameStockWatcher": "Mitch",
+            "lastNameStockWatcher": "McConnell"        
+        }
+    }
+    
+
+    //var uniqueSenateFirstNames = await client.db("congressStockWatcher").collection("senateStockWatcher").
+
+    return uniqueSenate;
+}
+*/
+// NOTE TO SELF: MAYBE CHANGE THE SENATE STOCK WATCH JSON FILE SO THAT IT IS THE SAME FORMAT AS THE HOUSE STOCK WATCH JSON FILE
+async function getUniqueHouseSW(client) {
+    var uniqueHouse = [];
+    var uniqueHouseNames = await client.db("congressStockWatcher").collection("houseStockWatcher").distinct("representative");
+
+    var count = 0;
+    uniqueHouseNames.forEach(aName => {
+        var jsonData = {};
+        var id = {};
+        var mapping = {};
+        var firstName = "firstNameStockWatcher";
+        var lastName = "lastNameStockWatcher";
+        nameArr = aName.split(" ");
+        console.log(nameArr);
+
+        if (nameArr.length == 3) {
+            id = count;
+            mapping[firstName] = nameArr[1];
+            mapping[lastName] = nameArr[2];
+            jsonData = {id, mapping};
+            uniqueHouse.push(jsonData);
+        } else if (nameArr.length == 4) {
+            id = count;
+            mapping[firstName] = nameArr[1] + " " + nameArr[2];
+            mapping[lastName] = nameArr[3];
+            jsonData = {id, mapping};
+            uniqueHouse.push(jsonData);
+        } else if (nameArr.length < 3 || nameArr.length > 4) {
+            console.log("THESE IS A NAME CONTAINING MORE THAN 4 NAMES");
+        }
+        
+        count += 1;
+    });
+
+    return uniqueHouse;
 }
 
 // DESCRIPTION: takes an API call to ProPublica API and returns a json object containing politician's bio
@@ -335,4 +421,90 @@ function getPolitician(id) {
     let variable = await getProPublicaRequest();
     console.log(variable);
 })()
+*/
+
+/*
+const { json } = require('express/lib/response');
+const {MongoClient} = require('mongodb');
+const Trade = require('./schemas/blog.js');
+const dotenv = require('dotenv');
+dotenv.config();
+
+//get date
+const d = new Date();
+date = d.getMonth() + 1;
+date += "-" + d.getDate() + "-" + d.getFullYear();
+
+//connect to db
+async function connectToDB(){
+    //heroku env variable
+    const dbURI = process.env.DB_CON_STRING;
+    const client = new MongoClient(dbURI);
+
+    try{
+        await client.connect();
+        checkTodayData(client);
+    } catch(e) {
+        console.log(e);
+    } finally {
+        //await client.close();
+    }
+
+}
+
+module.exports = {connectToDB};
+
+
+async function checkTodayData(client){
+    const db = client.db();
+    jsonObject = apiCall();
+
+    try{
+        const collection = db.collection(date);
+        collection.deleteOne(jsonObject, ((err, result) => {
+            console.log(err);
+        }));
+        //enters here when date is most recent and db does not exist console.log(date);
+    }catch{
+        const collection = db.createCollection(date);
+        collection.insertOne(jsonObject, ((err, result) => {
+            console.log(err);
+        }));
+    }
+
+}
+
+
+function apiCall(){
+    return {
+        transaction_date: "new test",
+        owner: "new test",
+        ticker: "new test",
+        asset_description: "new test",
+        asset_type: "new test",
+        type: "new test",
+        amount: "new test",
+        comment: "new test",
+        senator: "new test",
+        ptr_link: "new test",
+        disclosure_date: "new test"
+    }
+}
+*/
+
+/*
+NOTES:
+  3. get API to generate a unique list
+  4. get mapping to unique IDs
+
+  3. You need to query a mongo file named mappings, then build an object similar to the json object in client/src/components/politicians.js
+  4. You need to go into SenateStockWatcher and HouseStockWatcher .json files, you need to grab a list of unique names (they should already be unique), then build a mappings file in mongodb
+the mappings file will contain
+    id:
+        firstNameStockWatcher:
+        lastNameStockWatcher:
+    
+  we will generate unique ids based off the unique list of politicians in senatestockwatcher and housestockwatcher
+determination of where MongoDB files are located (where the senatestockwatcher and housestockwatcher json files) are located, the mappings file location, and the core MongoDB call will be necessary
+since 3. depends on 4., 4 needs to be done first.
 */
