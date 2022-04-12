@@ -1,6 +1,7 @@
 import React from 'react';
+import { Container, Row, Col } from 'react-bootstrap';
+
 import '../../App.css';
-import { Stack, Container, Row, Col } from 'react-bootstrap';
 import placeholder from "../images/placeholder.jpg"
 
 const About = () => {

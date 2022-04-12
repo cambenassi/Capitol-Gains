@@ -1,13 +1,9 @@
-import React from 'react';
-//import '../../App.css';
-import { useParams } from "react-router-dom";
-import { getPolitician } from "../politicians";
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { useState } from 'react'
-
-import Header from '../Header'
-import Bio from '../Bio'
-import Tabs from '../Tabs'
+import { getPolitician } from '../politicians';
+import Bio from '../Bio';
+import Tabs from '../Tabs';
 
 // individual politician page
 
