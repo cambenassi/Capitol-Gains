@@ -10,7 +10,6 @@ import Trades from '../Trades'
 
 
 const Homepage = () => 
-
 {const [trades] = useState([
         {
           id: 1,
@@ -62,19 +61,19 @@ const Homepage = () =>
         },
         {
           id: 7,
-          date: '8/14/1995',
-          stock: 'GME',
-          sector: 'Retail',
-          buy_sell: 'Buy',
-          amount: '$1001-$15,000',
-        },
-        {
-          id: 8,
           date: '5/6/1998',
           stock: 'F',
           sector: 'Auto',
           buy_sell: 'Buy',
           amount: '$50,001-$100,000',
+        },
+        {
+          id: 8,
+          date: '8/14/1995',
+          stock: 'GME',
+          sector: 'Retail',
+          buy_sell: 'Buy',
+          amount: '$1001-$15,000',
         },
       ])
     return (

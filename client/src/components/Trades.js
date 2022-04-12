@@ -31,7 +31,7 @@ function sorted(trades, sortMethod) {
 }
 
 const trades = ({ trades }) => {
-    let sortMethod = "stock";
+    let sortMethod = "date";
     sorted(trades, sortMethod);
 
     return (
