@@ -52,8 +52,8 @@ async function getDataVirtualDatabase(dataSlug) {
 
     // sample/depreciated data request using hardcoded json
     if (dataSlug.requestType == "uniqueCongress") {
-        await getMongoRequest();
-        return 1;
+        uniqueCongress = await uniqueCongress();
+        return uniqueCongress;
     } else if (dataSlug.requestType == "politicianById") {
         return getPolitician(dataSlug.requestData.id);
     } else if (dataSlug.requestType == "testMongo") {
@@ -69,17 +69,45 @@ async function getDataVirtualDatabase(dataSlug) {
     VIRTUAL DATA REQUESTS: requests that are combinatorial calls or built data object calls
 */
 async function uniqueCongress() {
+    var mongoRequest = await getMongoRequest();
+    console.log(mongoRequest);
 
-
-    return 1;
+    const uniqueCongress = mongoRequest;
+    return uniqueCongress;
 }
 
 /*
     CORE DATA REQUESTS: requests that go directly to specific databases/API calls
 */
-
 // DESCRIPTION: takes a mongodb call
-// PROTOTYPE:
+// PROTOTYPE: 
+async function getMongoRequest() {
+    const uri = "mongodb://localhost:27017";
+    const client = new MongoClient(uri);
+    var mongoRequest = [];
+
+    try {
+        console.log("Connecting...");
+        await client.connect();
+        var senateStockWatcher = await getSenateStockWatcher(client);
+        console.log(senateStockWatcher);
+    } catch (e) {
+        console.error(e);
+    } finally {
+        // Close connection to MongoDB cluster
+        await client.close();
+    }
+
+    return mongoRequest; // mongoRequest is the entire json file of senateStockWatcher and revised houseStockWater
+}
+
+async function getSenateStockWatcher(client) {
+    var senateStockWatcher = await client.db("congressStockWatcher").collection("senateStockWatcher");
+
+    return senateStockWatcher;
+}
+
+/*
 async function getMongoRequest() {
     //const uri = process.env.DB_CON_STRING;
     //const uri = "mongodb+srv://cam:GUIGroup8@cluster0.qc8sf.mongodb.net/senate-trades?retryWrites=true&w=majority";
@@ -96,10 +124,14 @@ async function getMongoRequest() {
         //return uniqueSenate;
         //console.log(await client.db("congressStockWatcher").collection("senateStockWatcher").distinct("first_name"));
 
-        const uniqueHouse = await getUniqueHouseSW(client);
-        console.log("IN getMongoRequest():", uniqueHouse);
-        return uniqueHouse;
+        //const uniqueHouse = await getUniqueHouseSW(client);
+        //console.log("IN getMongoRequest():", uniqueHouse);
+        //return uniqueHouse;
         //console.log(await client.db("congressStockWatcher").collection("houseStockWatcher").distinct("representative"));
+
+        
+        //const newHouseSWJSON = await createNewHouseSWJSON(client);
+        //return newHouseSWJSON;
     } catch (e) {
         console.error(e);
     } finally {
@@ -107,10 +139,12 @@ async function getMongoRequest() {
         await client.close();
     }
 }
+*/
 
 /*
     SUB CALLS FOR MONGODB REQUEST
 */
+// function that returns unique senate members from senate stock watcher
 /*
 async function getUniqueSenateSW(client) {
     var uniqueSenate = [];
@@ -136,22 +170,32 @@ async function getUniqueSenateSW(client) {
         count += 1;
     });
 
-    
-    {
-        "id": 0,  
-        "mapping": {
-            "firstNameStockWatcher": "Mitch",
-            "lastNameStockWatcher": "McConnell"        
-        }
-    }
-    
-
     //var uniqueSenateFirstNames = await client.db("congressStockWatcher").collection("senateStockWatcher").
 
     return uniqueSenate;
 }
 */
-// NOTE TO SELF: MAYBE CHANGE THE SENATE STOCK WATCH JSON FILE SO THAT IT IS THE SAME FORMAT AS THE HOUSE STOCK WATCH JSON FILE
+/*
+{
+    "id": 0,  
+    "mapping": {
+        "firstNameStockWatcher": "Mitch",
+        "lastNameStockWatcher": "McConnell"        
+    }
+}
+*/
+
+/*
+The function createNewHouseSWJSON() creates a new JSON object for House Stock Watcher that matches Senate Stock Watcher's 
+"All Transactions By Senator" JSON file.
+*/
+/*
+async function createNewHouseSWJSON(client) {
+
+    return newHouseSWJSON;
+}
+*/
+
 async function getUniqueHouseSW(client) {
     var uniqueHouse = [];
     var uniqueHouseNames = await client.db("congressStockWatcher").collection("houseStockWatcher").distinct("representative");
