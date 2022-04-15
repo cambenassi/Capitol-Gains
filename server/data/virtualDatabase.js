@@ -48,12 +48,9 @@ module.exports = {
 // DESCRIPTION: determines request type and routes appropriately, there should be no data processing in this function
 // PROTOTYPE: input dataSlug, return data object
 async function getDataVirtualDatabase(dataSlug) {
-    // determine request type
-
-    // sample/depreciated data request using hardcoded json
-    if (dataSlug.requestType == "uniqueCongress") {
-        uniqueCongress = await uniqueCongress();
-        return uniqueCongress;
+    // if statements to determine request type
+    if (dataSlug.requestType == "uniqueCongress") { // this request will return a list of uniqueCongress members containing first and last names
+        return await uniqueCongress();
     } else if (dataSlug.requestType == "politicianById") {
         return getPolitician(dataSlug.requestData.id);
     } else if (dataSlug.requestType == "testMongo") {
@@ -68,9 +65,24 @@ async function getDataVirtualDatabase(dataSlug) {
 /*
     VIRTUAL DATA REQUESTS: requests that are combinatorial calls or built data object calls
 */
+
+/*
+DESCRIPTION:
+Async function, uniqueCongress, that returns an array of JSON objects which contains a list of unique senators and represenatives.
+This function will make a call to the mongoDBRequect function which will return a JSON object containing the neccessary data
+from the all_transactions JSON files from senate/house stock watcher APIs that are in the mongoDB. Once having that data, 
+the uniqueCongress function will transform it into the JSON object we want to send back for our request.
+An example JSON object in the array is provided below:
+    {
+        id: "id_number",
+        mapping: {
+            firstNameStockWatcher: "politician_firstname",
+            lastNameStockWatcher: "politician_lastname"
+        }
+    }
+*/
 async function uniqueCongress() {
     var mongoRequest = await getMongoRequest();
-    console.log(mongoRequest);
 
     const uniqueCongress = mongoRequest;
     return uniqueCongress;
@@ -79,17 +91,24 @@ async function uniqueCongress() {
 /*
     CORE DATA REQUESTS: requests that go directly to specific databases/API calls
 */
-// DESCRIPTION: takes a mongodb call
-// PROTOTYPE: 
+
+/*
+DESCRIPTION:
+Async function, getMongoRequest, that returns an array of objects containing specific data from the all_transactions JSON file from senate/house 
+stock watcher API's that have been placed into our mongoDB datebase. Specifically, the data to acquire is the politician's first name and last name.
+Will make a mongoDB call to the two JSON files in our mongoDB database, get the data from both JSON files, combine the data, and then return the data 
+so that it could be dissected and shaped into a JSON object we want.
+*/
 async function getMongoRequest() {
     const uri = "mongodb://localhost:27017";
     const client = new MongoClient(uri);
     var mongoRequest = [];
+    var count = 0;
 
     try {
         console.log("Connecting...");
         await client.connect();
-        var senateStockWatcher = await getSenateStockWatcher(client);
+        var senateStockWatcher = await getSenateStockWatcher(count, client);
         console.log(senateStockWatcher);
     } catch (e) {
         console.error(e);
@@ -101,11 +120,71 @@ async function getMongoRequest() {
     return mongoRequest; // mongoRequest is the entire json file of senateStockWatcher and revised houseStockWater
 }
 
-async function getSenateStockWatcher(client) {
-    var senateStockWatcher = await client.db("congressStockWatcher").collection("senateStockWatcher");
+async function getSenateStockWatcher(count, client) {
+    var uniqueHouse = [];
+    var uniqueHouseNames = await client.db("congressStockWatcher").collection("senateStockWatcher").distinct("senator");
 
-    return senateStockWatcher;
+    uniqueHouseNames.forEach(aName => {
+        var jsonData = {};
+        var id = {};
+        var mapping = {};
+        var firstName = "firstNameStockWatcher";
+        var lastName = "lastNameStockWatcher";
+        nameArr = aName.split(" ");
+        console.log(nameArr);
+
+        for (i=0; i < nameArr.length; i++) {
+            id = count;
+            mapping[firstName] = nameArr[0];
+            jsonData = {id, mapping};
+            uniqueHouse.push(jsonData);
+        
+        count += 1;
+        }
+    })
+
+    jsonData = {id, mapping};
+
+    return uniqueHouse;
 }
+
+/*
+async function getHouseStockWatcher(client) {
+    var uniqueHouse = [];
+    var uniqueHouseNames = await client.db("congressStockWatcher").collection("houseStockWatcher").distinct("representative");
+
+    var count = 0;
+    uniqueHouseNames.forEach(aName => {
+        var jsonData = {};
+        var id = {};
+        var mapping = {};
+        var firstName = "firstNameStockWatcher";
+        var lastName = "lastNameStockWatcher";
+        nameArr = aName.split(" ");
+        console.log(nameArr);
+
+        if (nameArr.length == 3) {
+            id = count;
+            mapping[firstName] = nameArr[1];
+            mapping[lastName] = nameArr[2];
+            jsonData = {id, mapping};
+            uniqueHouse.push(jsonData);
+        } else if (nameArr.length == 4) {
+            id = count;
+            mapping[firstName] = nameArr[1] + " " + nameArr[2];
+            mapping[lastName] = nameArr[3];
+            jsonData = {id, mapping};
+            uniqueHouse.push(jsonData);
+        } else if (nameArr.length < 3 || nameArr.length > 4) {
+            console.log("THESE IS A NAME CONTAINING MORE THAN 4 NAMES");
+        }
+        
+        count += 1;
+    });
+
+    return uniqueHouse;
+}
+*/
 
 /*
 async function getMongoRequest() {
@@ -195,42 +274,6 @@ async function createNewHouseSWJSON(client) {
     return newHouseSWJSON;
 }
 */
-
-async function getUniqueHouseSW(client) {
-    var uniqueHouse = [];
-    var uniqueHouseNames = await client.db("congressStockWatcher").collection("houseStockWatcher").distinct("representative");
-
-    var count = 0;
-    uniqueHouseNames.forEach(aName => {
-        var jsonData = {};
-        var id = {};
-        var mapping = {};
-        var firstName = "firstNameStockWatcher";
-        var lastName = "lastNameStockWatcher";
-        nameArr = aName.split(" ");
-        console.log(nameArr);
-
-        if (nameArr.length == 3) {
-            id = count;
-            mapping[firstName] = nameArr[1];
-            mapping[lastName] = nameArr[2];
-            jsonData = {id, mapping};
-            uniqueHouse.push(jsonData);
-        } else if (nameArr.length == 4) {
-            id = count;
-            mapping[firstName] = nameArr[1] + " " + nameArr[2];
-            mapping[lastName] = nameArr[3];
-            jsonData = {id, mapping};
-            uniqueHouse.push(jsonData);
-        } else if (nameArr.length < 3 || nameArr.length > 4) {
-            console.log("THESE IS A NAME CONTAINING MORE THAN 4 NAMES");
-        }
-        
-        count += 1;
-    });
-
-    return uniqueHouse;
-}
 
 // DESCRIPTION: takes an API call to ProPublica API and returns a json object containing politician's bio
 // PROTOTYPE:
