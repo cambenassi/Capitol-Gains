@@ -1,4 +1,4 @@
-import Trade from './Trade'
+import Trade from './Trade';
 
 function sorted(trades, sortMethod) {
     if (sortMethod === "new") { //sort by oldest
@@ -31,7 +31,7 @@ function sorted(trades, sortMethod) {
 }
 
 const trades = ({ trades }) => {
-    let sortMethod = "stock";
+    let sortMethod = "date";
     sorted(trades, sortMethod);
 
     return (
