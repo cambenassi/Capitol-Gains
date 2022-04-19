@@ -1,11 +1,11 @@
-.cards {
-    background: #fff;
+  .cards {
   }
   /*
   h1 {
     text-align: center;
   }
   */
+
   .cards__container {
     display: flex;
     flex-flow: column;
@@ -25,10 +25,12 @@
   }
   
   .cards__item {
+    background-color: white;
     display: flex;
     flex: 1;
     border-radius: 10px;
     margin-right: 20px;
+    margin-bottom: 2rem;
   }
   
   .cards__item__link {
@@ -67,6 +69,7 @@
   
   .cards__item__info {
     padding: 0px 30px 10px;
+    text-align: center;
     color: black;
   }
 
