@@ -5,6 +5,7 @@ import CardItem from './CardItem';
 import Placeholder from './images/placeholder.jpg'
 import { getPoliticians } from "../components/politicians";
 import $ from "jquery";
+import { Container, Row, Col } from 'react-bootstrap';
  
 let politicians = getPoliticians();
 let sortMethod = "name";
@@ -163,16 +164,18 @@ function Cards() {
           </div>
           <div className='cards__container' id="cards__container" class="cards__container">
             <div className='cards__wrapper'>
-              <ul className='cards__items'>
+              <Container>
+              <Row>
                 {politicians.map((politician) => (
                   <CardItem
-                    src={Placeholder}
+                    src={politician.photo}
                     text={politician.name}
                     path={`/politician/${politician.id}`}
                     key={politician.id}
                   />
                 ))}
-              </ul>
+              </Row>
+              </Container>
             </div>
           </div>
         </div>
