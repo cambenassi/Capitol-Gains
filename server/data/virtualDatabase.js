@@ -117,6 +117,29 @@ async function uniqueCongress() {
         // NOTE TO SELF: CANNOT USE AWAIT/ASYNC FUNCTION IN forEach loop, think of a way to fix problem
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
         var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
+
+        for (var i=0; i < uniqueCongressNames.length; i++) {
+            
+            var jsonData = {}
+            id = id_count;
+
+            firstNameSplited = uniqueCongressNames[i].firstNameStockWatcher.split();
+            firstName = firstNameSplited[0];
+            lastName = uniqueCongressNames[i].lastNameStockWatcher;
+
+            politicianBio = await getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica);
+
+            if (politicianBio.Success) {
+                mapping = {
+                    firstNameStockWatcher: uniqueCongressNames[i].firstNameStockWatcher, 
+                    lastNameStockWatcher: uniqueCongressNames[i].lastNameStockWatcher, 
+                    politicianBio: politicianBio};
+                jsonData = {id, mapping};
+                uniqueCongress.push(jsonData);
+                id_count++;
+            }
+        }
+        /*
         uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
             var jsonData = {}
             id = id_count;
@@ -135,15 +158,16 @@ async function uniqueCongress() {
                 id_count++;
             }
 
+        })
+        */
 
-            /*
+        /*
             var test = 0;
             mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, test};
             jsonData = {id, mapping};
             uniqueCongress.push(jsonData);
             id_count++;
-            */
-        })
+        */
 
     } catch (e) {
         console.error(e);  // will console log an error message if an error occurs
