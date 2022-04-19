@@ -114,6 +114,7 @@ async function uniqueCongress() {
         var senateProPublica = proPublicaRequest[0];
         var houseProPublica = proPublicaRequest[1];
  
+        // NOTE TO SELF: CANNOT USE AWAIT/ASYNC FUNCTION IN forEach loop, think of a way to fix problem
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
         var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
         uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
@@ -126,11 +127,14 @@ async function uniqueCongress() {
 
             politicianBio = await getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica);
 
-            var test = 0;
-            mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, test};
-            jsonData = {id, mapping};
-            uniqueCongress.push(jsonData);
-            id_count++;
+            if (politicianBio.Success) {
+                mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, 
+                    politicianBio: politicianBio};
+                jsonData = {id, mapping};
+                uniqueCongress.push(jsonData);
+                id_count++;
+            }
+
 
             /*
             var test = 0;
@@ -147,8 +151,7 @@ async function uniqueCongress() {
         await client.close();  // closes connection to mongoDB cluster
     }
 
-    var dummyVariable = 0;
-    return dummyVariable;
+    return uniqueCongress;
 }
 
 /*
@@ -305,24 +308,23 @@ async function getHouseStockWatcher(houseCollection) {
 }
 
 async function getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica) {
-    memberID = getMemberID(firstName, lastName, senateProPublica, houseProPublica);
+    var memberID = getMemberID(firstName, lastName, senateProPublica, houseProPublica);
     
-    if (memberID != -1)
+    if (memberID != -1) {
         var politicianBioData = await getPoliticianBioData(memberID);
-
-        let politicianBio = {
-                    id: PoliticianBio.id,
-                    politician_bio: {
-                        FirstName: politicianBioData.first_name,
-                        MiddleName: politicianBioData.middle_name,
-                        LastName: politicianBioData.last_name,
-                        Chamber: politicianBioData.roles[0].chamber,
-                        Party: politicianBioData.roles[0].party,
-                        State: politicianBioData.roles[0].state,
-                        Committees: politicianBioData.roles[0].committees,
-                        Subcommittees: politicianBioData.roles[0].subcommittees
-                    }
-                };
+        var politicianBio = {
+            Success: true,
+            Chamber: politicianBioData.roles[0].chamber,
+            Party: politicianBioData.roles[0].party,
+            State: politicianBioData.roles[0].state,
+            Committees: politicianBioData.roles[0].committees,
+            Subcommittees: politicianBioData.roles[0].subcommittees
+        }
+    } else {
+        var politicianBio = {
+            Success: false
+        }
+    }
 
     return politicianBio;
 }
@@ -368,7 +370,7 @@ async function getPoliticianBioData(memberID) {
     const data = await response.json();
     PoliticianBio = data.results[0];
 
-    return PoliticianBio;
+    return politicianBioData;
 }
 
 /*
