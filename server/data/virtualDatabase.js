@@ -110,6 +110,78 @@ async function uniqueCongress() {
             return object1.firstNameStockWatcher.localeCompare(object2.firstNameStockWatcher);
         });
 
+        test = await getProPublicaRequest();
+        console.log(test);
+ 
+        var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
+        var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
+        uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
+            var jsonData = {}
+            id = id_count;
+            var test = 0;
+
+            mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, test};
+            jsonData = {id, mapping};
+            uniqueCongress.push(jsonData);
+            id_count++;
+        })
+
+    } catch (e) {
+        console.error(e);  // will console log an error message if an error occurs
+    } finally {
+        await client.close();  // closes connection to mongoDB cluster
+    }
+
+    var dummyVariable = 0;
+    return dummyVariable;
+}
+
+/*
+DESCRIPTION:
+Async function, uniqueCongress, that returns an array of JSON objects which contains unique list of ids and mappings of unique senators 
+and represenatives names. This function will make a call to the core mongoDB request function which will return the senate and house stock
+watcher collections data in the mongoDB. The collections data is the "all_transactions" JSON file from the senate/house stock watcher API.
+The collections data will then be givien to another function to extract the neccessary data that is wanted. Once having the unique names from
+both collections, the names will be put into a single array of JSONs and will be sorted by the politician's first names. Afterwards, the names
+will be id'ed and mapped into another array of JSONs which is returned for our request.
+An example JSON object in the array is provided below:
+    {
+        id: "id_number",
+        mapping: {
+            firstNameStockWatcher: "politician_firstname",
+            lastNameStockWatcher: "politician_lastname"
+        }
+    }
+*/
+/*
+async function uniqueCongress() {
+    const uri = "mongodb://localhost:27017";  // initialize uri with local mongoDB; this uri value will be replaced and initialized to our online mongoDB
+    const client = new MongoClient(uri);  // initialize the client using the uri
+
+    try {
+        console.log("Connecting...");
+        await client.connect();  // connect to the mongoDB cluster
+
+        mongoRequest = await getMongoRequest(client);  // accessing the client, returns the senate and house stock watcher collections
+        senateCollection = mongoRequest[0];
+        houseColleciton = mongoRequest[1];
+
+        var uniqueSenateNames = await getSenateStockWatcher(senateCollection);  // accessing the collection, returns a unique list of senator names
+        var uniqueHouseNames = await getHouseStockWatcher(houseColleciton);  // accessing the collection, returns a unique list of represenative names
+
+        var uniqueCongressNames = [];  // empty array that will contain JSON objects containing just the unique first and last names
+        uniqueSenateNames.forEach(senatorName => {  // pushes each unique senator name into the array for all congress member names
+            uniqueCongressNames.push(senatorName);
+        })
+
+        uniqueHouseNames.forEach(represenativeName => {  // pushes each unique represenative name into the array for all congress member names
+            uniqueCongressNames.push(represenativeName);
+        })
+
+        uniqueCongressNames = uniqueCongressNames.sort(function (object1, object2) {  // sort the congress member names array by first names
+            return object1.firstNameStockWatcher.localeCompare(object2.firstNameStockWatcher);
+        });
+
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
         var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
         uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
@@ -129,6 +201,7 @@ async function uniqueCongress() {
 
     return uniqueCongress;
 }
+*/
 
 /*
     SUB CALLS FOR uniqueCongress REQUEST
@@ -237,7 +310,24 @@ async function getMongoRequest(client) {
 
 // DESCRIPTION: takes an API call to ProPublica API and returns a json object containing politician's bio
 // PROTOTYPE:
+async function getProPublicaRequest() {
+    var congressMemberData = [];
 
+    // when server starts, grab HouseMemberData and put it into the global variable
+    getHouseMemberData().then(data => {
+        console.log('Server-side: Grabbing HouseMemberData through ProPublica API call and putting it into a global variable.');
+        houseMemberData = data;
+        console.log(houseMemberData);
+    })
+
+    // when server starts, grab SenateMemberData and put it into the global variable
+    getSenateMemberData().then(data => {
+        console.log('Server-side: Grabbing SenateMemberData through ProPublica API call and putting it into a global variable.');
+        senateMemberData = data;
+    })
+
+    return congressMemberData;
+}
 
 // NOTE: IGNORE PROPUBLICA REQUEST FUNCTIONS FOR NOW. THEY ARE STILL A WORK IN PROGRESS.
 /*
