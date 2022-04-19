@@ -83,8 +83,8 @@ An example JSON object in the array is provided below:
     }
 */
 async function uniqueCongress() {
-    const uri = "mongodb://localhost:27017";  // initialize uri with local mongoDB; this uri value will be replaced and initialized to our online mongoDB
-    const client = new MongoClient(uri);  // initialize the client using the uri
+    const mongo_uri = "mongodb://localhost:27017";  // initialize uri with local mongoDB; this uri value will be replaced and initialized to our online mongoDB
+    const client = new MongoClient(mongo_uri);  // initialize the client using the uri
 
     try {
         console.log("Connecting...");
@@ -110,20 +110,35 @@ async function uniqueCongress() {
             return object1.firstNameStockWatcher.localeCompare(object2.firstNameStockWatcher);
         });
 
-        test = await getProPublicaRequest();
-        console.log(test);
+        proPublicaRequest = await getProPublicaRequest();
+        var senateProPublica = proPublicaRequest[0];
+        var houseProPublica = proPublicaRequest[1];
  
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
         var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
         uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
             var jsonData = {}
             id = id_count;
-            var test = 0;
 
+            firstNameSplited = uniqueName.firstNameStockWatcher.split();
+            firstName = firstNameSplited[0];
+            lastName = uniqueName.lastNameStockWatcher;
+
+            politicianBio = await getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica);
+
+            var test = 0;
             mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, test};
             jsonData = {id, mapping};
             uniqueCongress.push(jsonData);
             id_count++;
+
+            /*
+            var test = 0;
+            mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, test};
+            jsonData = {id, mapping};
+            uniqueCongress.push(jsonData);
+            id_count++;
+            */
         })
 
     } catch (e) {
@@ -289,6 +304,73 @@ async function getHouseStockWatcher(houseCollection) {
     return uniqueHouseNames;
 }
 
+async function getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica) {
+    memberID = getMemberID(firstName, lastName, senateProPublica, houseProPublica);
+    
+    if (memberID != -1)
+        var politicianBioData = await getPoliticianBioData(memberID);
+
+        let politicianBio = {
+                    id: PoliticianBio.id,
+                    politician_bio: {
+                        FirstName: politicianBioData.first_name,
+                        MiddleName: politicianBioData.middle_name,
+                        LastName: politicianBioData.last_name,
+                        Chamber: politicianBioData.roles[0].chamber,
+                        Party: politicianBioData.roles[0].party,
+                        State: politicianBioData.roles[0].state,
+                        Committees: politicianBioData.roles[0].committees,
+                        Subcommittees: politicianBioData.roles[0].subcommittees
+                    }
+                };
+
+    return politicianBio;
+}
+
+/*
+Function that will get the politician's id number in ProPublica by looping through the HouseMemberData
+and SenateMemberData and checking if any names match with the provided name from the client.
+*/
+function getMemberID(firstName, lastName, senateProPublica, houseProPublica) {
+    var memberID;
+
+    for (i=0; i < senateProPublica.length; i++) {
+        if (senateProPublica[i].first_name == firstName && senateProPublica[i].last_name == lastName) {
+            memberID = senateProPublica[i].id;
+
+            return memberID;
+        }
+    }
+
+    for (i=0; i < houseProPublica.length; i++) {
+        if (houseProPublica[i].first_name == firstName && houseProPublica[i].last_name == lastName) {
+            memberID = houseProPublica[i].id;
+
+            return memberID;
+        }
+    }
+    
+    return -1;
+}
+
+/*
+Async function that takes the politician's member_id and make another call to the politician's specific json in ProPublica so that
+it could return the politician's bio information.
+*/
+async function getPoliticianBioData(memberID) {
+    const propublica_politician_bio_url = "https://api.propublica.org/congress/v1/members/" + memberID + ".json";
+    const response = await fetch(propublica_politician_bio_url, {
+        method: "GET",
+        headers: {
+            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
+        }
+    })
+    const data = await response.json();
+    PoliticianBio = data.results[0];
+
+    return PoliticianBio;
+}
+
 /*
     CORE DATA REQUESTS: requests that will be used constantly to retrieve data from the APIs
 */
@@ -296,7 +378,7 @@ async function getHouseStockWatcher(houseCollection) {
 /*
 DESCRIPTION:
 Async function, getMongoRequest, is a core request and returns the collections data in our mongoDB server.
-Collections in an array variable.
+Collections in placed and return in an array variable.
 */
 async function getMongoRequest(client) {
     var mongoRequest = [];
@@ -308,54 +390,70 @@ async function getMongoRequest(client) {
     return mongoRequest;  // collection data is returned in an array
 }
 
-// DESCRIPTION: takes an API call to ProPublica API and returns a json object containing politician's bio
-// PROTOTYPE:
-async function getProPublicaRequest() {
-    var congressMemberData = [];
-
-    // when server starts, grab HouseMemberData and put it into the global variable
-    getHouseMemberData().then(data => {
-        console.log('Server-side: Grabbing HouseMemberData through ProPublica API call and putting it into a global variable.');
-        houseMemberData = data;
-        console.log(houseMemberData);
-    })
-
-    // when server starts, grab SenateMemberData and put it into the global variable
-    getSenateMemberData().then(data => {
-        console.log('Server-side: Grabbing SenateMemberData through ProPublica API call and putting it into a global variable.');
-        senateMemberData = data;
-    })
-
-    return congressMemberData;
-}
-
-// NOTE: IGNORE PROPUBLICA REQUEST FUNCTIONS FOR NOW. THEY ARE STILL A WORK IN PROGRESS.
 /*
+DESCRIPTION:
+Async function, getProPublicaRequest, is a core request and returns senate and house member bio data from ProPublica's API.
+The senate and house member bio data is placed and returned in an array variable.
+*/
 async function getProPublicaRequest() {
-    var congressMemberData = [];
+    var proPublicaRequest = [];
 
-    // when server starts, grab HouseMemberData and put it into the global variable
-    getHouseMemberData().then(data => {
-        console.log('Server-side: Grabbing HouseMemberData through ProPublica API call and putting it into a global variable.');
-        houseMemberData = data;
-        congressMemberData.append(houseMemberData);
-        //console.log(congressMemberData);
+    // when this function is ran, grabs senate member's bio data from propublic
+    await getSenateProPublica().then(data => {
+        senateProPublica = data;
     })
 
-    // when server starts, grab SenateMemberData and put it into the global variable
-    getSenateMemberData().then(data => {
-        console.log('Server-side: Grabbing SenateMemberData through ProPublica API call and putting it into a global variable.');
-        senateMemberData = data;
-        congressMemberData.append(senateMemberData);
-        //console.log(congressMemberData);
+    // when this function is ran, grabs house member's bio data from propublica
+    await getHouseProPublica().then(data => {
+        houseProPublica = data;
     })
 
-    console.log("HELLO");
-    console.log(congressMemberData);
+    proPublicaRequest.push(senateProPublica);
+    proPublicaRequest.push(houseProPublica);
+
+    return proPublicaRequest;  // propublica data is returned in an array
 }
+
+/*
+    SUB CALLS FOR PROPUBLICA REQUEST
 */
 
-// NOTE TO SELF: MAYBE GET FULL LIST HOUSEMEMBERDATA AND SENATEMEMBERDATA IN THIS REQUEST, THEN MOVE THE TASKS TO THE VIRTUAL DATA REQUESTS LIKE POLITICIAN BIO
+/*
+DESCRIPTION:
+Async function, getSenateProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
+*/
+async function getSenateProPublica() {
+    const propublica_senate_url = "https://api.propublica.org/congress/v1/117/senate/members.json";
+    const response = await fetch(propublica_senate_url, {  // fetches and get data from propublica's senate database
+        method: "GET",
+        headers: {
+            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"  // propublica's API key; this key will be hidden in our env file
+        }
+    })
+    const data = await response.json();
+    var SenateMemberData = data.results[0].members;  // get the list of all senators
+
+    return SenateMemberData;
+}
+
+/*
+DESCRIPTION:
+Async function, getHouseProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
+*/
+async function getHouseProPublica() {
+    const propublica_house_url = "https://api.propublica.org/congress/v1/117/house/members.json";
+    const response = await fetch(propublica_house_url, {  // fetches and get data from propublica's house database
+        method: "GET",
+        headers: {
+            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"  // propublica's API key; this key will be hidden in our env file
+        }
+    })
+    const data = await response.json();
+    var HouseMemberData = data.results[0].members;  // gets the list of all representatives
+
+    return HouseMemberData;
+}
+
 /*
 async function getProPublicaRequest() {
     if (HouseMemberData && SenateMemberData) {
@@ -404,92 +502,22 @@ async function getProPublicaRequest() {
 }
 */
 
-/*
-    SUB CALLS FOR PROPUBLICA REQUEST
-*/
-// async function to fetch house member data from ProPublica
-async function getHouseMemberData() {
-    const propublica_house_url = "https://api.propublica.org/congress/v1/117/house/members.json";
-    const response = await fetch(propublica_house_url, {
-        method: "GET",  // gets data
-        headers: {
-            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
-        }
-    })
-    const data = await response.json();
-    var HouseMemberData = data.results[0].members;
-
-    return HouseMemberData;
-}
-
-// async function to fetch senate member data from ProPublica
-async function getSenateMemberData() {
-    const propublica_senate_url = "https://api.propublica.org/congress/v1/117/senate/members.json";
-    const response = await fetch(propublica_senate_url, {
-        method: "GET",
-        headers: {
-            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
-        }
-    })
-    const data = await response.json();
-    var SenateMemberData = data.results[0].members;
-
-    return SenateMemberData;
-}
-
-/*
-Function that will get the politician's id number in ProPublica by looping through the HouseMemberData
-and SenateMemberData and checking if any names match with the provided name from the client.
-*/
-function return_id_both_names(HouseMemberData, SenateMemberData, first_name, last_name) {
-    var member_id;
-    for (i=0; i < HouseMemberData.length; i++) {
-        if (HouseMemberData[i].first_name == first_name && HouseMemberData[i].last_name == last_name) {
-            member_id = HouseMemberData[i].id;
-
-            return member_id;
-        }
-    }
-
-    for (i=0; i < SenateMemberData.length; i++) {
-        if (SenateMemberData[i].first_name == first_name && SenateMemberData[i].last_name == last_name) {
-            member_id = SenateMemberData[i].id;
-
-            return member_id;
-        }
-    }
-    
-    console.log("Server-side: No match. The inputted name does not exist in the current congress.");
-    return -1;
-}
-
-/*
-Async function that takes the politician's member_id and make another call to the politician's specific json in ProPublica so that
-it could return the politician's bio information.
-*/
-async function getPoliticianBio(member_id) {
-    const propublica_politician_bio_url = "https://api.propublica.org/congress/v1/members/" + member_id + ".json";
-    const response = await fetch(propublica_politician_bio_url, {
-        method: "GET",
-        headers: {
-            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
-        }
-    })
-    const data = await response.json();
-    PoliticianBio = data.results[0];
-
-    return PoliticianBio;
-}
-
-// DESCRIPTION: takes an API call to Polygon.io
+// DESCRIPTION: takes an API call to Alphavantage.co
 // PROTOTYPE:
-async function getPolygon() {
+async function getAlphavantage() {
 }
+
+
+
+
+
+
 
 /*
     DEPRECIATED CALLS: phase these out, however good call structure for interim
 */
 
+/*
 async function getSenatorByLast(senator) {
     const uri = "mongodb://localhost:27017";
     const client = new MongoClient(uri);
@@ -518,46 +546,4 @@ async function findOneListingByName(client, nameOfListing) {
         console.log(`No listings found with the name of ${nameOfListing}`);
     }
 }
-
-let politicians = [
-    {
-        name: "Bernie Sanders",
-        state: "VT",
-        congressType: "Senator",
-        party: "D",
-        id: 1,
-    },
-    {
-        name: "Mitch McConnell",
-        state: "KY",
-        congressType: "Senator",
-        party: "R",
-        id: 2,
-    },
-    {
-        name: "Abraham Lincoln",
-        state: "DC",
-        congressType: "Representative",
-        party: "N",
-        id: 3,
-    },
-];
-
-// return array of json objects of all politiicans
-function getPoliticians() {
-    return politicians;
-}
-
-// return a specific politician id
-function getPolitician(id) {
-    return politicians.find(
-        (politician) => politician.id === id
-    );
-}
-
-/*
-(async() => {
-    let variable = await getProPublicaRequest();
-    console.log(variable);
-})()
 */
