@@ -69,17 +69,26 @@ async function getDataVirtualDatabase(dataSlug) {
 /*
 DESCRIPTION:
 Async function, uniqueCongress, that returns an array of JSON objects which contains unique list of ids and mappings of unique senators 
-and represenatives names. This function will make a call to the core mongoDB request function which will return the senate and house stock
-watcher collections data in the mongoDB. The collections data is the "all_transactions" JSON file from the senate/house stock watcher API.
-The collections data will then be givien to another function to extract the neccessary data that is wanted. Once having the unique names from
-both collections, the names will be put into a single array of JSONs and will be sorted by the politician's first names. Afterwards, the names
-will be id'ed and mapped into another array of JSONs which is returned for our request.
+and represenatives names as well as their bio information. This function will make a call to the core mongoDB request function which will
+return the senate and house stock watcher collections data in the mongoDB. The collections data is the "all_transactions" JSON file from the 
+senate/house stock watcher API. The collections data will then be givien to another function to extract the neccessary data that is wanted. 
+Once having the unique names from both collections, the names will be put into a single array of JSONs and will be sorted by the politician's 
+first names. Afterwards, the names will be then be matched to a corresponding name in propublica's API to get the bio information.
+Politician names from the mongoDB and propublica will be id'ed and mapped with their bio info into another array of JSONs which is returned
+for our request.
 An example JSON object in the array is provided below:
     {
         id: "id_number",
         mapping: {
-            firstNameStockWatcher: "politician_firstname",
-            lastNameStockWatcher: "politician_lastname"
+            stockActFirstName: "stockAct_firstname",
+            stockActLastName: "stockAct_lastname",
+            proPublicaFirstName: "proPublica_firstname",
+            proPublicaLastName: "proPublica_lastname",
+            Chamber: "chamber",
+            Party: "party",
+            State: "state",
+            Committees: "committees",  // this is an array of committees
+            Subcommittees: "subcommittees"  // this is an array of subcommittees
         }
     }
 */
@@ -111,20 +120,18 @@ async function uniqueCongress() {
             return object1.stockActFirstName.localeCompare(object2.stockActFirstName);
         });
 
-        proPublicaRequest = await getProPublicaRequest();
+        proPublicaRequest = await getProPublicaRequest();  // returns 117th congress bio data from propublica API
         var senateProPublica = proPublicaRequest[0];
         var houseProPublica = proPublicaRequest[1];
 
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
-        var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
-        for (var i=0; i < uniqueCongressNames.length; i++) {
+        var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a for loop
+        for (var i=0; i < uniqueCongressNames.length; i++) {  // this process takes some time, maybe about 3 minutes
             var jsonData = {}
             id = id_count;
 
-            stockActName = uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName;
-            console.log(stockActName);
-
-            politicianBio = await getPoliticianBio(stockActName, senateProPublica, houseProPublica);
+            stockActName = uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName;  // reconnect mongoDB names to be used
+            politicianBio = await getPoliticianBio(stockActName, senateProPublica, houseProPublica);  // get the politicianBio using mongoDB names
 
             if (politicianBio) {
                 mapping = {
@@ -138,6 +145,7 @@ async function uniqueCongress() {
                     Committees: politicianBio.Committees,
                     Subcommittees: politicianBio.Subcommittees
                 };
+
                 jsonData = {id, mapping};
                 uniqueCongress.push(jsonData);
                 id_count++;
@@ -239,10 +247,15 @@ async function getHouseStockWatcher(houseCollection) {
     return uniqueHouseNames;
 }
 
+/*
+DESCRIPTION:
+Async function, getPoliticianBio, returns a JSON object that is filled with bio information that the politician name that the mongoDB
+matched with.
+*/
 async function getPoliticianBio(stockActName, senateProPublica, houseProPublica) {
-    var memberID = getMemberID(stockActName, senateProPublica, houseProPublica);
+    var memberID = getMemberID(stockActName, senateProPublica, houseProPublica);  // get memberID through matching mongoDB and propublica names
     
-    if (memberID != -1) {
+    if (memberID != -1) {  // if we were able to get the memberID, fill all the key-values with relevant information
         var politicianBioData = await getPoliticianBioData(memberID);
         var politicianBio = {
             Success: true,
@@ -254,7 +267,7 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
             Committees: politicianBioData.roles[0].committees,
             Subcommittees: politicianBioData.roles[0].subcommittees
         }
-    } else {
+    } else {  // if we were not able to get the memberID, just fill all the key-values with null
         var politicianBio = {
             Success: false,
             FirstName: null,
@@ -271,8 +284,8 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
 }
 
 /*
-Function that will get the politician's id number in ProPublica by looping through the HouseMemberData
-and SenateMemberData and checking if any names match with the provided name from the client.
+DESCRIPTION:
+Async function, getMemberID, returns the memberID that the stockActName matched with in propublica's API database.
 */
 function getMemberID(stockActName, senateProPublica, houseProPublica) {
     var memberID = -1;
@@ -280,6 +293,9 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
     var matches;
     var highestMatch = 0;
 
+    /*
+    A matching algorithm is used because the stockActName does not match propublica's name very well.
+    */
     for (i=0; i < senateProPublica.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
@@ -297,7 +313,7 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
 
         })
 
-        if (highestMatch < matches) {
+        if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
             memberID = senateProPublica[i].id;
         }
     }
@@ -318,7 +334,7 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
             }
         })
 
-        if (highestMatch < matches) {
+        if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
             memberID = houseProPublica[i].id;
         }
     }
@@ -327,7 +343,8 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
 }
 
 /*
-Async function that takes the politician's member_id and make another call to the politician's specific json in ProPublica so that
+DESCRIPTION:
+Async function, getPoliticianBioData, takes a politician's memberID and makes another call to the politician's specific JSON in ProPublica so that
 it could return the politician's bio information.
 */
 async function getPoliticianBioData(memberID) {
