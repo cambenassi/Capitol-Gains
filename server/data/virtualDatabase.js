@@ -416,10 +416,10 @@ async function connectToDB(){
 // DESCRIPTION: Pushes data into desired collection in MongoDB, if collection exists then data will be added to it,
 // if collection does not exist it will be created and then added to it
 // VARS: client- MongoDB connection instance from connectToDB() function | data- JSON object (if array of JSON then 
-// loop through array outside of function and pass each object) | collectionName- desired name of collection
-async function pushToDB(client, data, collectionName){
-    const db = client.db("senate-trades");
-    const collectionArray = await client.db("senate-trades").listCollections({}, { nameOnly: true }).toArray()
+// loop through array outside of function and pass each object) | dbName- name of database | collectionName- desired name of collection
+async function pushToDB(client, data, dbName, collectionName){
+    const db = client.db(dbName);
+    const collectionArray = await client.db(dbName).listCollections({}, { nameOnly: true }).toArray()
 
     if(JSON.stringify(collectionArray).includes(collectionName)){
         db.collection(collectionName).insertOne(data, ((err, result) => {
