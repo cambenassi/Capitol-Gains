@@ -427,6 +427,24 @@ async function getSenateProPublica() {
     return SenateMemberData;
 }
 
+/*
+DESCRIPTION:
+Async function, getHouseProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
+*/
+async function getHouseProPublica() {
+    const propublica_house_url = "https://api.propublica.org/congress/v1/117/house/members.json";
+    const response = await fetch(propublica_house_url, {  // fetches and get data from propublica's house database
+        method: "GET",
+        headers: {
+            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"  // propublica's API key; this key will be hidden in our env file
+        }
+    })
+    const data = await response.json();
+    var HouseMemberData = data.results[0].members;  // gets the list of all representatives
+
+    return HouseMemberData;
+}
+
 // DESCRIPTION: function that connects to MongoDB database & returns a client object
 // VARS: returns client- a MongoDB connection instance
 // IMPORTANT: When storing client in a var, use this format- const client = await connectToDB();
@@ -461,23 +479,6 @@ async function pushToDB(client, data, dbName, collectionName){
             console.log(err);
         }));
     }
-}
-/*
-DESCRIPTION:
-Async function, getHouseProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
-*/
-async function getHouseProPublica() {
-    const propublica_house_url = "https://api.propublica.org/congress/v1/117/house/members.json";
-    const response = await fetch(propublica_house_url, {  // fetches and get data from propublica's house database
-        method: "GET",
-        headers: {
-            "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"  // propublica's API key; this key will be hidden in our env file
-        }
-    })
-    const data = await response.json();
-    var HouseMemberData = data.results[0].members;  // gets the list of all representatives
-
-    return HouseMemberData;
 }
 
 // DESCRIPTION: takes an API call to Alphavantage.co
