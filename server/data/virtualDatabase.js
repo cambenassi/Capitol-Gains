@@ -2,6 +2,7 @@ const { MongoClient } = require('mongodb');
 const _ = import('lodash');
 const fetch = require('node-fetch')
 const dotenv = require('dotenv');
+const { forEach } = require('lodash');
 dotenv.config();
 
 // public functions
@@ -107,134 +108,63 @@ async function uniqueCongress() {
         })
 
         uniqueCongressNames = uniqueCongressNames.sort(function (object1, object2) {  // sort the congress member names array by first names
-            return object1.firstNameStockWatcher.localeCompare(object2.firstNameStockWatcher);
+            return object1.stockActFirstName.localeCompare(object2.stockActFirstName);
         });
 
         proPublicaRequest = await getProPublicaRequest();
         var senateProPublica = proPublicaRequest[0];
         var houseProPublica = proPublicaRequest[1];
- 
-        // NOTE TO SELF: CANNOT USE AWAIT/ASYNC FUNCTION IN forEach loop, think of a way to fix problem
+
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
         var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
-
         for (var i=0; i < uniqueCongressNames.length; i++) {
-            
             var jsonData = {}
             id = id_count;
 
-            firstNameSplited = uniqueCongressNames[i].firstNameStockWatcher.split();
-            firstName = firstNameSplited[0];
-            lastName = uniqueCongressNames[i].lastNameStockWatcher;
+            stockActName = uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName;
+            console.log(stockActName);
 
-            politicianBio = await getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica);
+            politicianBio = await getPoliticianBio(stockActName, senateProPublica, houseProPublica);
 
-            if (politicianBio.Success) {
+            if (politicianBio) {
                 mapping = {
-                    firstNameStockWatcher: uniqueCongressNames[i].firstNameStockWatcher, 
-                    lastNameStockWatcher: uniqueCongressNames[i].lastNameStockWatcher, 
-                    politicianBio: politicianBio};
+                    stockActFirstName: uniqueCongressNames[i].stockActFirstName, 
+                    stockActLastName: uniqueCongressNames[i].stockActLastName, 
+                    Chamber: politicianBio.Chamber,
+                    Party: politicianBio.Party,
+                    State: politicianBio.State,
+                    Committees: politicianBio.Committees,
+                    Subcommittees: politicianBio.Subcommittees
+                };
                 jsonData = {id, mapping};
                 uniqueCongress.push(jsonData);
                 id_count++;
             }
-        }
-        /*
-        uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
-            var jsonData = {}
-            id = id_count;
 
-            firstNameSplited = uniqueName.firstNameStockWatcher.split();
+            /*
+            firstNameSplited = uniqueCongressNames[i].stockActFirstName.split();
             firstName = firstNameSplited[0];
-            lastName = uniqueName.lastNameStockWatcher;
+            lastName = uniqueCongressNames[i].stockActLastName;
 
             politicianBio = await getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica);
 
-            if (politicianBio.Success) {
-                mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, 
-                    politicianBio: politicianBio};
+            if (politicianBio) {
+                mapping = {
+                    stockActFirstName: uniqueCongressNames[i].stockActFirstName, 
+                    stockActLastName: uniqueCongressNames[i].stockActLastName, 
+                    Chamber: politicianBio.Chamber,
+                    Party: politicianBio.Party,
+                    State: politicianBio.State,
+                    Committees: politicianBio.Committees,
+                    Subcommittees: politicianBio.Subcommittees
+                };
                 jsonData = {id, mapping};
                 uniqueCongress.push(jsonData);
                 id_count++;
             }
-
-        })
-        */
-
-        /*
-            var test = 0;
-            mapping = {firstNameStockWatcher: uniqueName.firstNameStockWatcher, lastNameStockWatcher: uniqueName.lastNameStockWatcher, test};
-            jsonData = {id, mapping};
-            uniqueCongress.push(jsonData);
-            id_count++;
-        */
-
-    } catch (e) {
-        console.error(e);  // will console log an error message if an error occurs
-    } finally {
-        await client.close();  // closes connection to mongoDB cluster
-    }
-
-    return uniqueCongress;
-}
-
-/*
-DESCRIPTION:
-Async function, uniqueCongress, that returns an array of JSON objects which contains unique list of ids and mappings of unique senators 
-and represenatives names. This function will make a call to the core mongoDB request function which will return the senate and house stock
-watcher collections data in the mongoDB. The collections data is the "all_transactions" JSON file from the senate/house stock watcher API.
-The collections data will then be givien to another function to extract the neccessary data that is wanted. Once having the unique names from
-both collections, the names will be put into a single array of JSONs and will be sorted by the politician's first names. Afterwards, the names
-will be id'ed and mapped into another array of JSONs which is returned for our request.
-An example JSON object in the array is provided below:
-    {
-        id: "id_number",
-        mapping: {
-            firstNameStockWatcher: "politician_firstname",
-            lastNameStockWatcher: "politician_lastname"
+            */
         }
-    }
-*/
-/*
-async function uniqueCongress() {
-    const uri = "mongodb://localhost:27017";  // initialize uri with local mongoDB; this uri value will be replaced and initialized to our online mongoDB
-    const client = new MongoClient(uri);  // initialize the client using the uri
 
-    try {
-        console.log("Connecting...");
-        await client.connect();  // connect to the mongoDB cluster
-
-        mongoRequest = await getMongoRequest(client);  // accessing the client, returns the senate and house stock watcher collections
-        senateCollection = mongoRequest[0];
-        houseColleciton = mongoRequest[1];
-
-        var uniqueSenateNames = await getSenateStockWatcher(senateCollection);  // accessing the collection, returns a unique list of senator names
-        var uniqueHouseNames = await getHouseStockWatcher(houseColleciton);  // accessing the collection, returns a unique list of represenative names
-
-        var uniqueCongressNames = [];  // empty array that will contain JSON objects containing just the unique first and last names
-        uniqueSenateNames.forEach(senatorName => {  // pushes each unique senator name into the array for all congress member names
-            uniqueCongressNames.push(senatorName);
-        })
-
-        uniqueHouseNames.forEach(represenativeName => {  // pushes each unique represenative name into the array for all congress member names
-            uniqueCongressNames.push(represenativeName);
-        })
-
-        uniqueCongressNames = uniqueCongressNames.sort(function (object1, object2) {  // sort the congress member names array by first names
-            return object1.firstNameStockWatcher.localeCompare(object2.firstNameStockWatcher);
-        });
-
-        var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
-        var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a forEach loop
-        uniqueCongressNames.forEach(uniqueName => {  // creating our desired array of JSON objects of ids and mapping to unique first and last names
-            var jsonData = {}
-            id = id_count;
-            mapping = uniqueName;
-
-            jsonData = {id, mapping};
-            uniqueCongress.push(jsonData);
-            id_count++;
-        })
     } catch (e) {
         console.error(e);  // will console log an error message if an error occurs
     } finally {
@@ -243,7 +173,6 @@ async function uniqueCongress() {
 
     return uniqueCongress;
 }
-*/
 
 /*
     SUB CALLS FOR uniqueCongress REQUEST
@@ -263,8 +192,8 @@ async function getSenateStockWatcher(senateCollection) {
 
     uniqueSenateFullNames.forEach(senatorName => {
         var jsonData = {};
-        var firstName = "firstNameStockWatcher";
-        var lastName = "lastNameStockWatcher";
+        var firstName = "stockActFirstName";
+        var lastName = "stockActLastName";
         nameArr = senatorName.split(" ");  // split up the full senator name so that the name can be separated into first and last names
 
         if (nameArr.length == 2) {  // if the full senator name only contains 2 names
@@ -304,8 +233,8 @@ async function getHouseStockWatcher(houseCollection) {
 
     uniqueHouseFullNames.forEach(represenativeName => {
         var jsonData = {};
-        var firstName = "firstNameStockWatcher";
-        var lastName = "lastNameStockWatcher";
+        var firstName = "stockActFirstName";
+        var lastName = "stockActLastName";
         nameArr = represenativeName.split(" ");    // split up the full representative name so that the name can be separated into first and last names
 
         /*
@@ -331,8 +260,8 @@ async function getHouseStockWatcher(houseCollection) {
     return uniqueHouseNames;
 }
 
-async function getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica) {
-    var memberID = getMemberID(firstName, lastName, senateProPublica, houseProPublica);
+async function getPoliticianBio(stockActName, senateProPublica, houseProPublica) {
+    var memberID = getMemberID(stockActName, senateProPublica, houseProPublica);
     
     if (memberID != -1) {
         var politicianBioData = await getPoliticianBioData(memberID);
@@ -346,7 +275,12 @@ async function getPoliticianBio(firstName, lastName, senateProPublica, houseProP
         }
     } else {
         var politicianBio = {
-            Success: false
+            Success: false,
+            Chamber: null,
+            Party: null,
+            State: null,
+            Committees: null,
+            Subcommittees: null
         }
     }
 
@@ -357,8 +291,61 @@ async function getPoliticianBio(firstName, lastName, senateProPublica, houseProP
 Function that will get the politician's id number in ProPublica by looping through the HouseMemberData
 and SenateMemberData and checking if any names match with the provided name from the client.
 */
-function getMemberID(firstName, lastName, senateProPublica, houseProPublica) {
-    var memberID;
+function getMemberID(stockActName, senateProPublica, houseProPublica) {
+    var memberID = -1;
+    var stockActNameArr = stockActName.split(" ");
+    var matches;
+    var highestMatch = 0;
+
+    for (i=0; i < senateProPublica.length; i++) {
+
+        stockActNameArr.forEach(aName => {
+            if (senateProPublica[i].first_name == aName) {
+                matches++;
+            }
+
+            if (senateProPublica[i].middle_name == aName) {
+                matches++;
+            }
+
+            if (senateProPublica[i].last_name == aName) {
+                matches++;
+            }
+
+        })
+
+        if (highestMatch < matches) {
+            memberID = senateProPublica[i].id;
+        }
+
+        matches = 0;
+    }
+
+    for (i=0; i < houseProPublica.length; i++) {
+        stockActNameArr.forEach(aName => {
+            if (houseProPublica[i].first_name == aName) {
+                matches++;
+            }
+
+            if (houseProPublica[i].middle_name == aName) {
+                matches++;
+            }
+
+            if (houseProPublica[i].last_name == aName) {
+                matches++;
+            }
+        })
+
+        
+        if (highestMatch < matches) {
+            memberID = houseProPublica[i].id;
+        }
+
+        matches = 0;
+    }
+
+    /*
+    var memberID = -1;
 
     for (i=0; i < senateProPublica.length; i++) {
         if (senateProPublica[i].first_name == firstName && senateProPublica[i].last_name == lastName) {
@@ -375,8 +362,9 @@ function getMemberID(firstName, lastName, senateProPublica, houseProPublica) {
             return memberID;
         }
     }
-    
-    return -1;
+    */
+
+    return memberID;
 }
 
 /*
@@ -384,15 +372,15 @@ Async function that takes the politician's member_id and make another call to th
 it could return the politician's bio information.
 */
 async function getPoliticianBioData(memberID) {
-    const propublica_politician_bio_url = "https://api.propublica.org/congress/v1/members/" + memberID + ".json";
-    const response = await fetch(propublica_politician_bio_url, {
+    const url_memberID_ProProplica = "https://api.propublica.org/congress/v1/members/" + memberID + ".json";
+    const response = await fetch(url_memberID_ProProplica, {
         method: "GET",
         headers: {
             "X-API-Key": "jADs7ONXmGA9IGnzMDXTA8AH8Fb4WKBYKCuOk0dw"
         }
     })
     const data = await response.json();
-    PoliticianBio = data.results[0];
+    politicianBioData = data.results[0];
 
     return politicianBioData;
 }
@@ -480,96 +468,7 @@ async function getHouseProPublica() {
     return HouseMemberData;
 }
 
-/*
-async function getProPublicaRequest() {
-    if (HouseMemberData && SenateMemberData) {
-        var first_name = "Mitch";
-        var last_name = "McConnell";
-
-        if (first_name && last_name) {
-            console.log("Server-side: Using the provided name to search through the member's list and returning the member's id, if possible.");
-            member_id = return_id_both_names(HouseMemberData, SenateMemberData, first_name, last_name);
-            
-            if (member_id != -1) {
-                console.log('Server-side: The name is valid so a member_id exists.')
-                console.log('Server-side: Grabbing politician data using member_id through an API call.')
-                const PoliticianBio = await getPoliticianBio(member_id);
-                //console.log(test_data);
-
-                let test_data = {
-                    id: PoliticianBio.id,
-                    politician_bio: {
-                        FirstName: PoliticianBio.first_name,
-                        MiddleName: PoliticianBio.middle_name,
-                        LastName: PoliticianBio.last_name,
-                        Chamber: PoliticianBio.roles[0].chamber,
-                        Party: PoliticianBio.roles[0].party,
-                        State: PoliticianBio.roles[0].state,
-                        Committees: PoliticianBio.roles[0].committees,
-                        Subcommittees: PoliticianBio.roles[0].subcommittees
-                    }
-                };
-                return test_data;
-            } else {
-                console.log('Server-side: The name is invalid so a member_id does not exist.')
-                console.log('Server-side: Sending a failure response back to the client-side\n')
-                response.json({
-                    status: 'failure',
-                });
-            }
-        } else {
-            console.log('Server-side: The name is invalid so a member_id does not exist.')
-            console.log('Server-side: Sending a failure response back to the client-side\n')
-            response.json({
-                status: 'failure',
-            });
-        }
-    }
-}
-*/
-
 // DESCRIPTION: takes an API call to Alphavantage.co
 // PROTOTYPE:
 async function getAlphavantage() {
 }
-
-
-
-
-
-
-
-/*
-    DEPRECIATED CALLS: phase these out, however good call structure for interim
-*/
-
-/*
-async function getSenatorByLast(senator) {
-    const uri = "mongodb://localhost:27017";
-    const client = new MongoClient(uri);
-
-    try {
-        console.log("Connecting...");
-        await client.connect();
-        const data = await findOneListingByName(client, senator);
-        return data;
-    } catch (e) {
-        console.error(e);
-    } finally {
-        // Close the connection to the MongoDB cluster
-        await client.close();
-    }
-}
-
-async function findOneListingByName(client, nameOfListing) {
-    const result = await client.db("member_sorted").collection("stockwatcher").findOne({ last_name: nameOfListing });
-
-    if (result) {
-        console.log(`Found a listing in the collection with the name '${nameOfListing}'`);
-        // console.log(result);
-        return result;
-    } else {
-        console.log(`No listings found with the name of ${nameOfListing}`);
-    }
-}
-*/
