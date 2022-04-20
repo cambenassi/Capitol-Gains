@@ -45,6 +45,7 @@ module.exports = {
     MAIN DATA REQUESTS: highest level virtual database call
 */
 
+
 // DESCRIPTION: determines request type and routes appropriately, there should be no data processing in this function
 // PROTOTYPE: input dataSlug, return data object
 async function getDataVirtualDatabase(dataSlug) {
@@ -426,6 +427,41 @@ async function getSenateProPublica() {
     return SenateMemberData;
 }
 
+// DESCRIPTION: function that connects to MongoDB database & returns a client object
+// VARS: returns client- a MongoDB connection instance
+// IMPORTANT: When storing client in a var, use this format- const client = await connectToDB();
+// Caller must use async() => {client.close();}; after they are done with client object to close connection 
+async function connectToDB(){
+    const dbURI = process.env.DB_CON_STRING;
+    const client = new MongoClient(dbURI);
+
+    try{
+        await client.connect();
+        return client;
+    } catch(e) {
+        console.log(e);
+    }
+}
+
+// DESCRIPTION: Pushes data into desired collection in MongoDB, if collection exists then data will be added to it,
+// if collection does not exist it will be created and then added to it
+// VARS: client- MongoDB connection instance from connectToDB() function | data- JSON object (if array of JSON then 
+// loop through array outside of function and pass each object) | dbName- name of database | collectionName- desired name of collection
+async function pushToDB(client, data, dbName, collectionName){
+    const db = client.db(dbName);
+    const collectionArray = await client.db(dbName).listCollections({}, { nameOnly: true }).toArray()
+
+    if(JSON.stringify(collectionArray).includes(collectionName)){
+        db.collection(collectionName).insertOne(data, ((err, result) => {
+            console.log(err);
+        }));
+    }else{
+        db.createCollection(collectionName);
+        db.collection(collectionName).insertOne(data, ((err, result) => {
+            console.log(err);
+        }));
+    }
+}
 /*
 DESCRIPTION:
 Async function, getHouseProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
