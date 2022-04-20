@@ -396,6 +396,41 @@ async function getPoliticianBio(member_id) {
 async function getPolygon() {
 }
 
+// DESCRIPTION: function that connects to MongoDB database & returns a client object
+// VARS: returns client- a MongoDB connection instance
+// IMPORTANT: When storing client in a var, use this format- const client = await connectToDB();
+// Caller must use async() => {client.close();}; after they are done with client object to close connection 
+async function connectToDB(){
+    const dbURI = process.env.DB_CON_STRING;
+    const client = new MongoClient(dbURI);
+
+    try{
+        await client.connect();
+        return client;
+    } catch(e) {
+        console.log(e);
+    }
+}
+
+// DESCRIPTION: Pushes data into desired collection in MongoDB, if collection exists then data will be added to it,
+// if collection does not exist it will be created and then added to it
+// VARS: client- MongoDB connection instance from connectToDB() function | data- JSON object (if array of JSON then 
+// loop through array outside of function and pass each object) | collectionName- desired name of collection
+async function pushToDB(client, data, collectionName){
+    const db = client.db("senate-trades");
+    const collectionArray = await client.db("senate-trades").listCollections({}, { nameOnly: true }).toArray()
+
+    if(JSON.stringify(collectionArray).includes(collectionName)){
+        db.collection(collectionName).insertOne(data, ((err, result) => {
+            console.log(err);
+        }));
+    }else{
+        db.createCollection(collectionName);
+        db.collection(collectionName).insertOne(data, ((err, result) => {
+            console.log(err);
+        }));
+    }
+}
 /*
     DEPRECIATED CALLS: phase these out, however good call structure for interim
 */
@@ -464,6 +499,8 @@ function getPolitician(id) {
         (politician) => politician.id === id
     );
 }
+
+testDB();
 
 /*
 (async() => {
