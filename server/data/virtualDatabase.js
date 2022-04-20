@@ -500,8 +500,6 @@ function getPolitician(id) {
     );
 }
 
-testDB();
-
 /*
 (async() => {
     let variable = await getProPublicaRequest();
