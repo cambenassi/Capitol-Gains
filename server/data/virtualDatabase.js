@@ -129,7 +129,9 @@ async function uniqueCongress() {
             if (politicianBio) {
                 mapping = {
                     stockActFirstName: uniqueCongressNames[i].stockActFirstName, 
-                    stockActLastName: uniqueCongressNames[i].stockActLastName, 
+                    stockActLastName: uniqueCongressNames[i].stockActLastName,
+                    proPublicaFirstName: politicianBio.FirstName,
+                    proPublicaLastName: politicianBio.LastName,
                     Chamber: politicianBio.Chamber,
                     Party: politicianBio.Party,
                     State: politicianBio.State,
@@ -140,29 +142,6 @@ async function uniqueCongress() {
                 uniqueCongress.push(jsonData);
                 id_count++;
             }
-
-            /*
-            firstNameSplited = uniqueCongressNames[i].stockActFirstName.split();
-            firstName = firstNameSplited[0];
-            lastName = uniqueCongressNames[i].stockActLastName;
-
-            politicianBio = await getPoliticianBio(firstName, lastName, senateProPublica, houseProPublica);
-
-            if (politicianBio) {
-                mapping = {
-                    stockActFirstName: uniqueCongressNames[i].stockActFirstName, 
-                    stockActLastName: uniqueCongressNames[i].stockActLastName, 
-                    Chamber: politicianBio.Chamber,
-                    Party: politicianBio.Party,
-                    State: politicianBio.State,
-                    Committees: politicianBio.Committees,
-                    Subcommittees: politicianBio.Subcommittees
-                };
-                jsonData = {id, mapping};
-                uniqueCongress.push(jsonData);
-                id_count++;
-            }
-            */
         }
 
     } catch (e) {
@@ -267,6 +246,8 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
         var politicianBioData = await getPoliticianBioData(memberID);
         var politicianBio = {
             Success: true,
+            FirstName: politicianBioData.first_name,
+            LastName: politicianBioData.last_name,
             Chamber: politicianBioData.roles[0].chamber,
             Party: politicianBioData.roles[0].party,
             State: politicianBioData.roles[0].state,
@@ -276,6 +257,8 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
     } else {
         var politicianBio = {
             Success: false,
+            FirstName: null,
+            LastName: null,
             Chamber: null,
             Party: null,
             State: null,
@@ -298,7 +281,7 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
     var highestMatch = 0;
 
     for (i=0; i < senateProPublica.length; i++) {
-
+        matches = 0;
         stockActNameArr.forEach(aName => {
             if (senateProPublica[i].first_name == aName) {
                 matches++;
@@ -317,11 +300,10 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
         if (highestMatch < matches) {
             memberID = senateProPublica[i].id;
         }
-
-        matches = 0;
     }
 
     for (i=0; i < houseProPublica.length; i++) {
+        matches = 0;
         stockActNameArr.forEach(aName => {
             if (houseProPublica[i].first_name == aName) {
                 matches++;
@@ -336,33 +318,10 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
             }
         })
 
-        
         if (highestMatch < matches) {
             memberID = houseProPublica[i].id;
         }
-
-        matches = 0;
     }
-
-    /*
-    var memberID = -1;
-
-    for (i=0; i < senateProPublica.length; i++) {
-        if (senateProPublica[i].first_name == firstName && senateProPublica[i].last_name == lastName) {
-            memberID = senateProPublica[i].id;
-
-            return memberID;
-        }
-    }
-
-    for (i=0; i < houseProPublica.length; i++) {
-        if (houseProPublica[i].first_name == firstName && houseProPublica[i].last_name == lastName) {
-            memberID = houseProPublica[i].id;
-
-            return memberID;
-        }
-    }
-    */
 
     return memberID;
 }
