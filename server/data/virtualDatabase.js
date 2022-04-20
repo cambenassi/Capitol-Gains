@@ -97,6 +97,9 @@ async function uniqueCongress() {
     const mongo_uri = "mongodb://localhost:27017";  // initialize uri with local mongoDB; this uri value will be replaced and initialized to our online mongoDB
     const client = new MongoClient(mongo_uri);  // initialize the client using the uri
 
+    //const mongo_uri = process.env.DB_CON_STRING;
+    //const client = new MongoClient(mongo_uri);
+    
     try {
         console.log("Connecting...");
         await client.connect();  // connect to the mongoDB cluster
@@ -304,10 +307,6 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
                 matches++;
             }
 
-            if (senateProPublica[i].middle_name == aName) {
-                matches++;
-            }
-
             if (senateProPublica[i].last_name == aName) {
                 matches++;
             }
@@ -323,10 +322,6 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
         matches = 0;
         stockActNameArr.forEach(aName => {
             if (houseProPublica[i].first_name == aName) {
-                matches++;
-            }
-
-            if (houseProPublica[i].middle_name == aName) {
                 matches++;
             }
 
@@ -374,6 +369,7 @@ Collections in placed and return in an array variable.
 async function getMongoRequest(client) {
     var mongoRequest = [];
     var senateCollection = await client.db("congressStockWatcher").collection("senateStockWatcher");  // gets senate stock watcher collection data
+    //var senateCollection = await client.db("senate-trades").collection("sen-4_20_2022");  // gets senate stock watcher collection data
     var houseCollection = await client.db("congressStockWatcher").collection("houseStockWatcher");  // gets house stock watcher collection data
     mongoRequest.push(senateCollection);
     mongoRequest.push(houseCollection);
