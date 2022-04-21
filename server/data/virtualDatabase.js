@@ -135,6 +135,7 @@ async function uniqueCongress() {
             id = id_count;
 
             stockActName = uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName;  // reconnect mongoDB names to be used
+            console.log(stockActName);
             politicianBio = await getPoliticianBio(stockActName, senateProPublica, houseProPublica);  // get the politicianBio using mongoDB names
 
             if (politicianBio) {
@@ -156,12 +157,18 @@ async function uniqueCongress() {
             }
         }
 
+        JSON.stringify(uniqueCongress);
+
+        console.log("ABOUT TO pushToDB");
+        await pushToDB(client, uniqueCongress, "congressStockWatcher", "TEST");
+
     } catch (e) {
         console.error(e);  // will console log an error message if an error occurs
     } finally {
-        await client.close();  // closes connection to mongoDB cluster
+        await client.close();
     }
 
+    //var dummyVariable = 0;
     return uniqueCongress;
 }
 
@@ -462,15 +469,18 @@ async function connectToDB(){
 // VARS: client- MongoDB connection instance from connectToDB() function | data- JSON object (if array of JSON then 
 // loop through array outside of function and pass each object) | dbName- name of database | collectionName- desired name of collection
 async function pushToDB(client, data, dbName, collectionName){
-    const db = client.db(dbName);
+    console.log("I AM IN pushToDB function!!!");
+    const db = await client.db(dbName);
     const collectionArray = await client.db(dbName).listCollections({}, { nameOnly: true }).toArray()
 
     if(JSON.stringify(collectionArray).includes(collectionName)){
+        console.log("collection already exist?")
         db.collection(collectionName).insertOne(data, ((err, result) => {
             console.log(err);
         }));
     }else{
         db.createCollection(collectionName);
+        console.log("create collection to input in?")
         db.collection(collectionName).insertOne(data, ((err, result) => {
             console.log(err);
         }));
