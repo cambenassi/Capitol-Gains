@@ -147,7 +147,7 @@ async function uniqueCongress() {
                 };
 
                 jsonData = {id, mapping};
-                //await pushToDB(client, jsonData, "senate-trades", "uniqueCongress");
+                await pushToDB(client, jsonData, "senate-trades", "uniqueCongress");
                 uniqueCongress.push(jsonData);
                 id_count++;
             }
