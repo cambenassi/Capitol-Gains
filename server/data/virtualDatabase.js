@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 const _ = import('lodash');
 const fetch = require('node-fetch')
 const dotenv = require('dotenv');
-const { forEach } = require('lodash');
+const { forEach, uniq } = require('lodash');
 dotenv.config();
 
 // public functions
@@ -94,15 +94,9 @@ An example JSON object in the array is provided below:
     }
 */
 async function uniqueCongress() {
-    const mongo_uri = "mongodb://localhost:27017";  // initialize uri with local mongoDB; this uri value will be replaced and initialized to our online mongoDB
-    const client = new MongoClient(mongo_uri);  // initialize the client using the uri
-
-    //const mongo_uri = process.env.DB_CON_STRING;
-    //const client = new MongoClient(mongo_uri);
-    
     try {
         console.log("Connecting...");
-        await client.connect();  // connect to the mongoDB cluster
+        var client = await connectToDB();
 
         mongoRequest = await getMongoRequest(client);  // accessing the client, returns the senate and house stock watcher collections
         senateCollection = mongoRequest[0];
@@ -144,6 +138,7 @@ async function uniqueCongress() {
                     stockActLastName: uniqueCongressNames[i].stockActLastName,
                     proPublicaFirstName: politicianBio.FirstName,
                     proPublicaLastName: politicianBio.LastName,
+                    DoB: politicianBio.DoB,
                     Chamber: politicianBio.Chamber,
                     Party: politicianBio.Party,
                     State: politicianBio.State,
@@ -152,23 +147,18 @@ async function uniqueCongress() {
                 };
 
                 jsonData = {id, mapping};
+                //await pushToDB(client, jsonData, "senate-trades", "uniqueCongress");
                 uniqueCongress.push(jsonData);
                 id_count++;
             }
         }
-
-        JSON.stringify(uniqueCongress);
-
-        console.log("ABOUT TO pushToDB");
-        await pushToDB(client, uniqueCongress, "congressStockWatcher", "TEST");
-
     } catch (e) {
         console.error(e);  // will console log an error message if an error occurs
-    } finally {
-        await client.close();
     }
 
-    //var dummyVariable = 0;
+    console.log("Disconnecting");
+    async() => {client.close();};
+
     return uniqueCongress;
 }
 
@@ -272,6 +262,7 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
             Success: true,
             FirstName: politicianBioData.first_name,
             LastName: politicianBioData.last_name,
+            DoB: politicianBioData.date_of_birth,
             Chamber: politicianBioData.roles[0].chamber,
             Party: politicianBioData.roles[0].party,
             State: politicianBioData.roles[0].state,
@@ -283,6 +274,7 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
             Success: false,
             FirstName: null,
             LastName: null,
+            DoB: null,
             Chamber: null,
             Party: null,
             State: null,
@@ -375,9 +367,8 @@ Collections in placed and return in an array variable.
 */
 async function getMongoRequest(client) {
     var mongoRequest = [];
-    var senateCollection = await client.db("congressStockWatcher").collection("senateStockWatcher");  // gets senate stock watcher collection data
-    //var senateCollection = await client.db("senate-trades").collection("sen-4_20_2022");  // gets senate stock watcher collection data
-    var houseCollection = await client.db("congressStockWatcher").collection("houseStockWatcher");  // gets house stock watcher collection data
+    var senateCollection = await client.db("senate-trades").collection("sen-4_21_2022");  // gets senate stock watcher collection data
+    var houseCollection = await client.db("senate-trades").collection("house-4_21_2022");  // gets house stock watcher collection data
     mongoRequest.push(senateCollection);
     mongoRequest.push(houseCollection);
 
@@ -469,18 +460,15 @@ async function connectToDB(){
 // VARS: client- MongoDB connection instance from connectToDB() function | data- JSON object (if array of JSON then 
 // loop through array outside of function and pass each object) | dbName- name of database | collectionName- desired name of collection
 async function pushToDB(client, data, dbName, collectionName){
-    console.log("I AM IN pushToDB function!!!");
     const db = await client.db(dbName);
     const collectionArray = await client.db(dbName).listCollections({}, { nameOnly: true }).toArray()
 
     if(JSON.stringify(collectionArray).includes(collectionName)){
-        console.log("collection already exist?")
         db.collection(collectionName).insertOne(data, ((err, result) => {
             console.log(err);
         }));
     }else{
         db.createCollection(collectionName);
-        console.log("create collection to input in?")
         db.collection(collectionName).insertOne(data, ((err, result) => {
             console.log(err);
         }));

@@ -1,1 +1,0 @@
-DB_CON_STRING = "mongodb+srv://cam:GUIGroup8@cluster0.qc8sf.mongodb.net/senate-trades?retryWrites=true&w=majority"
