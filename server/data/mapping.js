@@ -225,6 +225,10 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
                 matches++;
             }
 
+            if (senateProPublica[i].middle_name == aName) {
+                matches++;
+            }
+
             if (senateProPublica[i].last_name == aName) {
                 matches++;
             }
@@ -232,6 +236,7 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
         })
 
         if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
+            highestMatch = matches;
             memberID = senateProPublica[i].id;
         }
     }
@@ -243,12 +248,17 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
                 matches++;
             }
 
+            if (houseProPublica[i].middle_name == aName) {
+                matches++;
+            }
+
             if (houseProPublica[i].last_name == aName) {
                 matches++;
             }
         })
 
         if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
+            highestMatch = matches;
             memberID = houseProPublica[i].id;
         }
     }
