@@ -5,13 +5,6 @@
   font-family: 'PT Sans', sans-serif;
 }
 
-<<<<<<< HEAD
-=======
-.background {
-  background-color: #e5e5e5c9;
-}
-
->>>>>>> e7649720... undo deleting everything
 /*
 .homepage,
 .about,
@@ -50,7 +43,6 @@
 
 .footer {
   background: linear-gradient(90deg, #699b2c 0%, #2d4a1a 100%);
-<<<<<<< HEAD
   height: 40px;
   padding-top: 5px;
   bottom: 0;
@@ -89,13 +81,6 @@
 }
 
 /*** Recent Transactions ***/
-=======
-  height: 35px;
-  padding-top: 5px;
-}
-
-/*** Homepage ***/
->>>>>>> e7649720... undo deleting everything
 .topmoverheader {
   padding-top:20px;
 }
