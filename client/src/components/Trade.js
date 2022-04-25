@@ -29,7 +29,10 @@ const Trade = ({ trade }) => {
                     <td>{trade.sector}</td>
                     <td>{trade.buy_sell}</td>
                     <td>{trade.amount}</td>
+<<<<<<< HEAD
                     <td>{trade.gainslosses}</td>
+=======
+>>>>>>> e7649720... undo deleting everything
                 </tr>
     )
 }

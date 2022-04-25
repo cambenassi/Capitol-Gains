@@ -44,7 +44,10 @@ const trades = ({ trades }) => {
                     <th>Politician</th>
                     <th>Stock Name</th>
                     <th>Industry</th>
+<<<<<<< HEAD
                     <th>Transaction Type</th>
+=======
+>>>>>>> e7649720... undo deleting everything
                     <th>Transaction Amount</th>
                     <th>Gains/Losses</th>
                 </tr>

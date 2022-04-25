@@ -45,6 +45,7 @@ function Navbar() {
             </li>
             <li className='nav-item'>
               <NavLink
+<<<<<<< HEAD
                 to='/recenttransactions'
                 className='nav-links'
                 onClick={closeMobileMenu}
@@ -54,6 +55,8 @@ function Navbar() {
             </li>
             <li className='nav-item'>
               <NavLink
+=======
+>>>>>>> e7649720... undo deleting everything
                 to='/politicians'
                 className='nav-links'
                 onClick={closeMobileMenu}

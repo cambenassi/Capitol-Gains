@@ -9,6 +9,7 @@ import { Container, Row, Col } from 'react-bootstrap';
  
 let politicians = getPoliticians();
 let sortMethod = "name";
+<<<<<<< HEAD
 let party = "unselected";
 let state = "unselected";
 let congress = "unselected";
@@ -80,10 +81,52 @@ function filterCongress (selectedCongress) {
 
     /*refresh the page*/
   }
+=======
+
+function sorted(politicians, sort) {
+  sortMethod = sort;
+  //politicians = getPoliticians();
+  //nameSelect(document.getElementById('inputname').value, politicians)
+
+  if (sortMethod === "new") {
+      function dateComparison(a, b) {
+          const date1 = new Date(a)
+          const date2 = new Date(b)
+          
+          return date1 - date2;
+      }
+      
+      politicians.sort(dateComparison);
+  }    
+
+  if (sortMethod === "old") { //sort by oldest
+    
+  }
+  if (sortMethod === "name") { //sort by age
+    politicians.sort((a, b) => (a.name > b.name) ? 1 : -1);
+  }
+  if (sortMethod === "party") { //sort by party
+    politicians.sort((a, b) => (a.party > b.party) ? 1 : -1);
+  }  
+  if (sortMethod === "state") { //sort by state
+    politicians.sort((a, b) => (a.state > b.state) ? 1 : -1);
+  } 
+  if (sortMethod === "age") { //sort by age
+    politicians.sort((a, b) => (a.date_of_birth > b.date_of_birth) ? 1 : -1);
+  } 
+  if (sortMethod === "chamber") { //sort by chamber
+    politicians.sort((a, b) => (a.congressType > b.congressType) ? 1 : -1);
+  } 
+
+  console.log("Sorted end:", politicians);
+  redo();
+  return politicians;
+>>>>>>> e7649720... undo deleting everything
 }
 
 function nameSelect (nameSegment, politicians) {
   politicians = getPoliticians();
+<<<<<<< HEAD
 
   if(nameSegment) {                                                                        //if the user has typed in a name or part of a name
     politicians = politicians.filter(politician => politician.name.includes(nameSegment)); //filter politicians by the name fragment. case sensitive
@@ -131,6 +174,34 @@ function congressSelect() {
   document.getElementById("sort-selection").classList.remove("show");
   document.getElementById("party-selection").classList.remove("show");
   document.getElementById("state-selection").classList.remove("show");
+=======
+  console.log("name:", nameSegment);
+  if(nameSegment) {
+        console.log("Before name:", nameSegment, " politicians:", politicians);
+    politicians = politicians.filter(politician => politician.name.includes(nameSegment)); //currently case sensitive
+
+    console.log("After name:", nameSegment, " politicians:", politicians);
+  }
+
+  politicians = sorted(politicians,sortMethod); //sort selected names
+  redo();
+  return politicians;
+}
+
+function redo() { 
+  //console.log("in redo");
+  //console.log("Redo Politicians before:", politicians);
+  //$('#cards__container').load('#cards__container');
+  //console.log("Redo Politicians after:", politicians);
+  
+  //$("#cards__container").load("#cards__container");
+  //$("#cards__items").load(window.location.href + " #cards__items" );
+
+}
+
+function drop() {
+  document.getElementById("dropped").classList.toggle("show");
+>>>>>>> e7649720... undo deleting everything
 }
 
 // Close the dropdown menu if the user clicks outside of it
@@ -147,7 +218,10 @@ window.onclick = function(event) {
   }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> e7649720... undo deleting everything
 function Cards() {
     // REPLACE WITH MONGODB CALL
     // get all politicians data object
@@ -184,6 +258,7 @@ function Cards() {
       getPoliticiansUnique();
     });
 
+<<<<<<< HEAD
   return (
         <div className='cards'>
           <br></br>
@@ -272,6 +347,41 @@ function Cards() {
             </div>
           </div>
           <div className='cards__container' id="cards__container">
+=======
+  /*Testing*/
+  let sortMethod = "name";     //get this from user
+  sorted(politicians, sortMethod);  //initial page sort
+
+    //let politicianName = "Bernie";
+
+    //console.log("Old Politicians: ", politicians);
+    //politicians = nameSelect (politicianName, politicians);
+    //console.log("New Politicians: ", politicians);
+
+
+  return (
+        <div className='cards'>
+          <div className='topbar'>
+              <label id="inputname">Name:</label>
+              <input type="text" id="inputname" className="inputname" onInput={() => (politicians = nameSelect(document.querySelector('input').value, politicians))}/>
+              <button className="searchBtn" onClick={() => (politicians = nameSelect(document.getElementById('inputname').value, politicians))}>Search</button>
+            <div className='searchbar'>
+              <div className="dropdown">
+                <label id="droplabel">Sort:</label>
+                <button onClick={() => drop()} className="dropbtn">Dropdown</button>
+                <div id="dropped" className="dropdown-content">
+                  <button className="dropdown-option" onClick={() => (politicians = sorted(politicians, 'name'))}>Name</button>
+                  <button className="dropdown-option" onClick={() => (politicians = sorted(politicians, "state"))}>State</button>
+                  <button className="dropdown-option" onClick={() => (politicians = sorted(politicians, "sector"))}>Sector</button>
+                  <button className="dropdown-option" onClick={() => (politicians = sorted(politicians, "party"))}>Party</button>
+                  <button className="dropdown-option" onClick={() => (politicians = sorted(politicians, "chamber"))}>Chamber</button>
+                  <button className="dropdown-option" onClick={() => (politicians = sorted(politicians, "age"))}>Age</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className='cards__container' id="cards__container" class="cards__container">
+>>>>>>> e7649720... undo deleting everything
             <div className='cards__wrapper'>
               <Container>
               <Row>
