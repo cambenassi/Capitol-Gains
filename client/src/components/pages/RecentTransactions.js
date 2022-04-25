@@ -108,7 +108,6 @@ export default function RecentTransactions() {
             {/*<Col className="homepage-graph" lg={5} md={12} sm={12}><img className="topmoverline-pic" src={line} alt="linegraph"/></Col>*/}
     </Row>
     </Container>
-    <div className='footer'><p>@2022 Capitol Gains Inc. All Rights Reserved</p></div>
     </div>
     </>
   );

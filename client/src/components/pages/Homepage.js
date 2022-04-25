@@ -69,7 +69,6 @@ export default function Homepage() {
             </Col>
         </Row>
     </div>
-    <div className='footer'><p>@2022 Capitol Gains Inc. All Rights Reserved</p></div>
     </>
     );
   };
