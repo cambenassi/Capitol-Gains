@@ -159,3 +159,12 @@
 .aboutdata h5 {
   margin: 0px 0px 20px 0px;
 }
+
+.aboutdatapic {
+  width:80%;
+  height:170px;
+  margin-bottom: 20px;
+  margin-left: 10%;
+  margin-right: 10%;
+  border-radius: 20px;
+}
