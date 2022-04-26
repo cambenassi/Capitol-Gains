@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 
 import '../../App.css';
 import placeholder from "../images/placeholder3.png"
-import polygon from "../images/polygon.png"
+import alphavantage from "../images/alphavantage2.png"
 import stockwatcher from "../images/stockwatcher.svg"
 import propublica from "../images/propublica.jpg"
 
@@ -101,11 +101,11 @@ const About = () => {
                 </p>
                 </Col>
                 <Col xl={4} lg={6} md={6} sm={12}>
-                <h5>Polygon.io Data</h5>
-                <img className="aboutdatapic" src={polygon} alt="polygon.io"/>
+                <h5>Alpha Vantage Data</h5>
+                <img className="aboutdatapic" src={alphavantage} alt="polygon.io"/>
                 <p>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In order to provide context to the trades made by Congress members, we use market data about the financial assets.
-                Polygon.io is an industry leading API trusted by companies
+                Alpha Vantage is an industry leading API trusted by companies
                 like Google and Robinhood to get the most accurate and up to date trading information for stocks and cryptocurrencies.
                 </p>
                 </Col>
