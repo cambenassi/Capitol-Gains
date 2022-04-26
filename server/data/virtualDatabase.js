@@ -60,6 +60,9 @@ async function getDataVirtualDatabase(dataSlug) {
         return {
             test: "response1"
         }
+    } else if (dataSlug.requestType == "allTransactions") {
+        const trades = await getAllTransactions();
+        return trades;
     }
 }
 
@@ -135,8 +138,8 @@ Collections in placed and return in an array variable.
 */
 async function getMongoRequest(client) {
     var mongoRequest = [];
-    var senateCollection = await client.db("senate-trades").collection("sen-4_21_2022");  // gets senate stock watcher collection data
-    var houseCollection = await client.db("senate-trades").collection("house-4_21_2022");  // gets house stock watcher collection data
+    var senateCollection = await client.db("senate-trades").collection("sen-" + getDate());  // gets senate stock watcher collection data
+    var houseCollection = await client.db("senate-trades").collection("house-" + getDate());  // gets house stock watcher collection data
     var uniqueCongressCollection = await client.db("senate-trades").collection("uniqueCongress");  // gets uniqueCongress collection data
     mongoRequest.push(senateCollection);
     mongoRequest.push(houseCollection);
@@ -181,7 +184,114 @@ async function pushToDB(client, data, dbName, collectionName){
     }
 }
 
+// DESCRIPTION: Stores todays date in todayDate for collection naming scheme
+// VARS: returns todayDate - a string with todays date in mm_dd_yyyy format
+function getDate(){
+    const d = new Date();
+    todayDate = d.getMonth() + 1;
+    todayDate += "_" + d.getDate() + "_" + d.getFullYear();
+
+    return todayDate;
+}
+
+// DESCRIPTION: Pulls the most recent version of "all transactions" from senate stock watcher. Uploads to MongoDB in a collection
+// titled "sen-mm_dd_yyyy" where "mm_dd_yyyy" is a string of today's date from the getDate function. Function will check
+// to see if today's data is already in MongoDB, either pulling and uploading if it is not up to date, or printing to the console if 
+// data is already found in database.
+// VARS: returns JSON object of all senate transactions
+async function getSenateTransactions(){
+    let collectionName = "sen-" + getDate();
+    
+    const client = await connectToDB();
+    const collectionArray = await client.db("senate-trades").listCollections({}, { nameOnly: true }).toArray()
+
+    if(JSON.stringify(collectionArray).includes(collectionName)){
+        console.log("Most recent trades are already in MongoDB.");
+    }else{
+        await fetch('https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json')
+        .then((response) => response.json())
+        .then(async (response) => {
+                console.log("Uploading trades to MongoDB, please wait...");
+                for(i = 0; i < response.length; i++){
+                    await pushToDB(client, response[i], "senate-trades", collectionName);
+                }
+                console.log("Upload Finished");
+                async() => {client.close();};
+        })
+        .catch((e) => {
+            console.log(e)
+        })
+    }
+
+    return fetch('https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json')
+        .then((response) => {
+            return response.json().then((data) => {
+                //console.log(data);
+                return data;
+            }).catch((err) => {
+                console.log(err);
+            })
+        })
+}
+
+// DESCRIPTION: Pulls the most recent version of "all transactions" from house stock watcher. Uploads to MongoDB in a collection
+// titled "house-mm_dd_yyyy" where "mm_dd_yyyy" is a string of today's date from the getDate function. Function will check
+// to see if today's data is already in MongoDB, either pulling and uploading if it is not up to date, or printing to the console if 
+// data is already found in database.
+// VARS: returns JSON object of all house transactions
+async function getHouseTransactions(){
+    let collectionName = "house-" + getDate();
+
+    const client = await connectToDB();
+    const collectionArray = await client.db("senate-trades").listCollections({}, { nameOnly: true }).toArray()
+
+    if(JSON.stringify(collectionArray).includes(collectionName)){
+        console.log("Most recent trades are already in MongoDB.");
+    }else{
+        await fetch('https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json')
+        .then((response) => response.json())
+        .then(async (response) => {
+                console.log("Uploading trades to MongoDB, please wait...");
+                for(i = 0; i < response.length; i++){
+                    await pushToDB(client, response[i], "senate-trades", collectionName);
+                }
+                console.log("Upload Finished");
+                async() => {client.close();};
+        })
+        .catch((e) => {
+            console.log(e)
+        })
+    }
+
+    return fetch('https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json')
+        .then((response) => {
+            return response.json().then((data) => {
+                //console.log(data);
+                return data;
+            }).catch((err) => {
+                console.log(err);
+            })
+        })
+}
+
 // DESCRIPTION: takes an API call to Alphavantage.co
 // PROTOTYPE:
 async function getAlphavantage() {
+}
+
+// DESCRIPTION: Compiles the 2 JSON Objects from getSenateTransactions() & getHouseTransactions() into one large JSON Object.
+// VARS: Returns allTrades, a JSON Object containing all trades from both websites
+async function getAllTransactions(){
+    let senate = [], house = [];
+    
+    await getSenateTransactions().then((data) => {
+        senate.push(data);
+    })
+    await getHouseTransactions().then((data) => {
+        house.push(data);
+    })
+    
+    const allTrades = senate[0].concat(house[0]);
+
+    return await allTrades;
 }
