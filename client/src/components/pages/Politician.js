@@ -46,7 +46,7 @@ export default function Politician() {
     {
       id: 1,
       date: '5/6/2021',
-      politician: <Link to={`/politician/${politician.id}`}> {politician.name}</Link>,
+      //politician: <Link to={`/politician/${politician.id}`}> {politician.name}</Link>,
       stock: 'TSLA',
       sector: 'Auto',
       buy_sell: 'Sell',
