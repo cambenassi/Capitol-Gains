@@ -1,6 +1,6 @@
 /*
 DESCRIPTION:
-NOTE: This file does not work, the mapping file in mongoDB was pushed through the virtualDatabase.js file.
+NOTE: THIS FILE DOES NOTE INCLUDE POLITICIAN PORTRAITS IN THE CREATION OF THE ARRAY OF JSONS. ALSO NOT 100% ACCURATE OF MAPPING.
 This file will be ran by hand, nothing in our code will trigger it.
 This file will be ran to build mapping file into our mongoDB.
 To run code, type "node mapping.js" in right directory.
@@ -21,12 +21,10 @@ async function uniqueCongress() {
         console.log("Connecting...");
         var client = await connectToDB();
 
-        console.log("TEST1");
         mongoRequest = await getMongoRequest(client);  // accessing the client, returns the senate and house stock watcher collections
         senateCollection = mongoRequest[0];
         houseColleciton = mongoRequest[1];
 
-        console.log("TEST2");
         var uniqueSenateNames = await getSenateStockWatcher(senateCollection);  // accessing the collection, returns a unique list of senator names
         var uniqueHouseNames = await getHouseStockWatcher(houseColleciton);  // accessing the collection, returns a unique list of represenative names
 
@@ -43,9 +41,27 @@ async function uniqueCongress() {
             return object1.stockActFirstName.localeCompare(object2.stockActFirstName);
         });
 
-        proPublicaRequest = await getProPublicaRequest();  // returns 117th congress bio data from propublica API
-        var senateProPublica = proPublicaRequest[0];
-        var houseProPublica = proPublicaRequest[1];
+        /*
+        Getting specific proPublica data through a getProPublicaRequest by providing the congressNumber and chamber
+        */
+        congressNumber = 115;
+        chamber = "senate";
+        senate115 = await getProPublicaRequest(congressNumber, chamber);
+        chamber = "house";
+        house115 = await getProPublicaRequest(congressNumber, chamber);
+
+        congressNumber = 116;
+        chamber = "senate";
+        senate116 = await getProPublicaRequest(congressNumber, chamber);
+        chamber = "house";
+        house116 = await getProPublicaRequest(congressNumber, chamber);
+
+        congressNumber = 117;
+        chamber = "senate";
+        senate117 = await getProPublicaRequest(congressNumber, chamber);
+        chamber = "house";
+        house117 = await getProPublicaRequest(congressNumber, chamber);
+
 
         var uniqueCongress = [];  // empty array that will contain JSON objects containing unique ids and mapping to the unique names
         var id_count = 0;  // id count is initialized to 0, will be use to id the politicians in a for loop
@@ -55,7 +71,8 @@ async function uniqueCongress() {
 
             stockActName = uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName;  // reconnect mongoDB names to be used
             console.log(stockActName);
-            politicianBio = await getPoliticianBio(stockActName, senateProPublica, houseProPublica);  // get the politicianBio using mongoDB names
+            // getting politicianBio from proPublica using mongoDB names, and the propublica congress data
+            politicianBio = await getPoliticianBio(stockActName, senate115, house115, senate116, house116, senate117, house117);
 
             if (politicianBio) {
                 mapping = {
@@ -178,8 +195,10 @@ DESCRIPTION:
 Async function, getPoliticianBio, returns a JSON object that is filled with bio information that the politician name that the mongoDB
 matched with.
 */
-async function getPoliticianBio(stockActName, senateProPublica, houseProPublica) {
-    var memberID = getMemberID(stockActName, senateProPublica, houseProPublica);  // get memberID through matching mongoDB and propublica names
+async function getPoliticianBio(stockActName, senate115, house115, senate116, house116, senate117, house117) 
+{
+    // get memberID through matching mongoDB and propublica names
+    var memberID = getMemberID(stockActName, senate115, house115, senate116, house116, senate117, house117);
     
     if (memberID != -1) {  // if we were able to get the memberID, fill all the key-values with relevant information
         var politicianBioData = await getPoliticianBioData(memberID);
@@ -215,27 +234,28 @@ async function getPoliticianBio(stockActName, senateProPublica, houseProPublica)
 DESCRIPTION:
 Async function, getMemberID, returns the memberID that the stockActName matched with in propublica's API database.
 */
-function getMemberID(stockActName, senateProPublica, houseProPublica) {
+function getMemberID(stockActName, senate115, house115, senate116, house116, senate117, house117) {
     var memberID = -1;
     var stockActNameArr = stockActName.split(" ");
     var matches;
     var highestMatch = 0;
 
     /*
-    A matching algorithm is used because the stockActName does not match propublica's name very well.
+    A matching algorithm is used because the stockActName does not match propublica's name very well. Will check
+    through the 115th, 116th, and 117th congress to match the names.
     */
-    for (i=0; i < senateProPublica.length; i++) {
+    for (i=0; i < senate115.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (senateProPublica[i].first_name == aName) {
+            if (senate115[i].first_name == aName) {
                 matches++;
             }
 
-            if (senateProPublica[i].middle_name == aName) {
+            if (senate115[i].middle_name == aName) {
                 matches++;
             }
 
-            if (senateProPublica[i].last_name == aName) {
+            if (senate115[i].last_name == aName) {
                 matches++;
             }
 
@@ -243,29 +263,121 @@ function getMemberID(stockActName, senateProPublica, houseProPublica) {
 
         if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
             highestMatch = matches;
-            memberID = senateProPublica[i].id;
+            memberID = senate115[i].id;
         }
     }
 
-    for (i=0; i < houseProPublica.length; i++) {
+    for (i=0; i < house115.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (houseProPublica[i].first_name == aName) {
+            if (house115[i].first_name == aName) {
                 matches++;
             }
 
-            if (houseProPublica[i].middle_name == aName) {
+            if (house115[i].middle_name == aName) {
                 matches++;
             }
 
-            if (houseProPublica[i].last_name == aName) {
+            if (house115[i].last_name == aName) {
                 matches++;
             }
         })
 
         if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
             highestMatch = matches;
-            memberID = houseProPublica[i].id;
+            memberID = house115[i].id;
+        }
+    }
+
+    for (i=0; i < senate116.length; i++) {
+        matches = 0;
+        stockActNameArr.forEach(aName => {
+            if (senate116[i].first_name == aName) {
+                matches++;
+            }
+
+            if (senate116[i].middle_name == aName) {
+                matches++;
+            }
+
+            if (senate116[i].last_name == aName) {
+                matches++;
+            }
+
+        })
+
+        if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
+            highestMatch = matches;
+            memberID = senate116[i].id;
+        }
+    }
+
+    for (i=0; i < house116.length; i++) {
+        matches = 0;
+        stockActNameArr.forEach(aName => {
+            if (house116[i].first_name == aName) {
+                matches++;
+            }
+
+            if (house116[i].middle_name == aName) {
+                matches++;
+            }
+
+            if (house116[i].last_name == aName) {
+                matches++;
+            }
+
+        })
+
+        if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
+            highestMatch = matches;
+            memberID = house116[i].id;
+        }
+    }
+
+    for (i=0; i < senate117.length; i++) {
+        matches = 0;
+        stockActNameArr.forEach(aName => {
+            if (senate117[i].first_name == aName) {
+                matches++;
+            }
+
+            if (senate117[i].middle_name == aName) {
+                matches++;
+            }
+
+            if (senate117[i].last_name == aName) {
+                matches++;
+            }
+
+        })
+
+        if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
+            highestMatch = matches;
+            memberID = senate117[i].id;
+        }
+    }
+
+    for (i=0; i < house117.length; i++) {
+        matches = 0;
+        stockActNameArr.forEach(aName => {
+            if (house117[i].first_name == aName) {
+                matches++;
+            }
+
+            if (house117[i].middle_name == aName) {
+                matches++;
+            }
+
+            if (house117[i].last_name == aName) {
+                matches++;
+            }
+
+        })
+
+        if (highestMatch < matches) {  // if a name matched better than another name, the ID for that name match is taken
+            highestMatch = matches;
+            memberID = house117[i].id;
         }
     }
 
@@ -312,62 +424,21 @@ async function getMongoRequest(client) {
 
 /*
 DESCRIPTION:
-Async function, getProPublicaRequest, is a core request and returns senate and house member bio data from ProPublica's API.
-The senate and house member bio data is placed and returned in an array variable.
+Async function, getProPublicaRequest, is a core request and returns senate or house member bio data from ProPublica's API
+depending on the provided variables.
 */
-async function getProPublicaRequest() {
-    var proPublicaRequest = [];
-
-    // when this function is ran, grabs senate member's bio data from propublic
-    await getSenateProPublica().then(data => {
-        senateProPublica = data;
-    })
-
-    // when this function is ran, grabs house member's bio data from propublica
-    await getHouseProPublica().then(data => {
-        houseProPublica = data;
-    })
-
-    proPublicaRequest.push(senateProPublica);
-    proPublicaRequest.push(houseProPublica);
-
-    return proPublicaRequest;  // propublica data is returned in an array
-}
-
-/*
-DESCRIPTION:
-Async function, getSenateProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
-*/
-async function getSenateProPublica() {
-    const propublica_senate_url = "https://api.propublica.org/congress/v1/117/senate/members.json";
-    const response = await fetch(propublica_senate_url, {  // fetches and get data from propublica's senate database
+async function getProPublicaRequest(congressNumber, chamber) {
+    const proPublicaURI = "https://api.propublica.org/congress/v1/" + congressNumber + "/" + chamber + "/members.json";
+    const response = await fetch(proPublicaURI, {  // fetches and get data from propublica's senate database
         method: "GET",
         headers: {
             "X-API-Key": process.env.PP_API_KEY
         }
     })
     const data = await response.json();
-    var SenateMemberData = data.results[0].members;  // get the list of all senators
+    var proPublicaData = data.results[0].members;  // get the list of all senators
 
-    return SenateMemberData;
-}
-
-/*
-DESCRIPTION:
-Async function, getHouseProPublica, is a sub call for ProPublica's core request. It returns senate members bio data from ProPublica's API.
-*/
-async function getHouseProPublica() {
-    const propublica_house_url = "https://api.propublica.org/congress/v1/117/house/members.json";
-    const response = await fetch(propublica_house_url, {  // fetches and get data from propublica's house database
-        method: "GET",
-        headers: {
-            "X-API-Key": process.env.PP_API_KEY
-        }
-    })
-    const data = await response.json();
-    var HouseMemberData = data.results[0].members;  // gets the list of all representatives
-
-    return HouseMemberData;
+    return proPublicaData;
 }
 
 // DESCRIPTION: function that connects to MongoDB database & returns a client object
@@ -407,12 +478,11 @@ async function pushToDB(client, data, dbName, collectionName){
 }
 
 async function runMapping() {
-    await uniqueCongress();
+    uniqueCongress = await uniqueCongress();
+    return uniqueCongress;
 }
 
 (async() => {
-    var mapping = await runMapping();
-    console.log("hello");
+    var mapping = await runMapping();;
     console.log(mapping);
-    console.log("bye");
 })()
