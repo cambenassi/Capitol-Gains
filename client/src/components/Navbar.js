@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Nav, NavLink, NavMenu } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+
 import './Navbar.css';
-import logo from './images/logo.png'
+import logo from './images/logo.png';
 
 
 function Navbar() {
@@ -40,6 +41,15 @@ function Navbar() {
             <li className='nav-item'>
               <NavLink to='/' className='nav-links' onClick={closeMobileMenu}>
                 Home
+              </NavLink>
+            </li>
+            <li className='nav-item'>
+              <NavLink
+                to='/recenttransactions'
+                className='nav-links'
+                onClick={closeMobileMenu}
+              >
+                Recent Transactions
               </NavLink>
             </li>
             <li className='nav-item'>

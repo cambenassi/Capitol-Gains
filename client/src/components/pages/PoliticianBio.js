@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState } from 'react';
 
 import Header from '../Header'
 import Bio from '../Bio'
 import Tabs from '../Tabs'
+import '../../App.css'
 
 const App = () => {
 
@@ -104,9 +105,11 @@ const App = () => {
   */
 
   return (
+    <div className="background">
     <div className="container">
       <Bio className="bio" bio={bio}/>
       <Tabs trades={trades}/>
+    </div>
     </div>
   );
 }
