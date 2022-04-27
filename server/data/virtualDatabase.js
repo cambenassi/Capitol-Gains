@@ -45,6 +45,7 @@ module.exports = {
     MAIN DATA REQUESTS: highest level virtual database call
 */
 
+const alphaVantageKey = process.env.ALPHA_VANTAGE_KEY;
 
 // DESCRIPTION: determines request type and routes appropriately, there should be no data processing in this function
 // PROTOTYPE: input dataSlug, return data object
@@ -63,6 +64,16 @@ async function getDataVirtualDatabase(dataSlug) {
     } else if (dataSlug.requestType == "allTransactions") {
         const trades = await getAllTransactions();
         return trades;
+    } else if (dataSlug.requestType == "stockSector") {
+        const stockTicker = dataSlug.requestData.ticker;
+        return await getStockSector(stockTicker, alphaVantageKey);
+    } else if (dataSlug.requestType == "unrealizedGainsLosses") {
+        const stockTicker = dataSlug.requestData.ticker;
+        const purchaseDate = dataSlug.requestData.stockTransactionDate;
+        return await calculateUnrealizedGainsLosses(purchaseDate, stockTicker, alphaVantageKey);
+    } else if (dataSlug.requestType == "allClosingPrices") {
+        const stockTicker = dataSlug.requestData.ticker;
+        return await getAllStockClosingPrices(stockTicker, alphaVantageKey);
     }
 }
 
@@ -267,11 +278,6 @@ async function getHouseTransactions(){
         })
 }
 
-// DESCRIPTION: takes an API call to Alphavantage.co
-// PROTOTYPE:
-async function getAlphavantage() {
-}
-
 // DESCRIPTION: Compiles the 2 JSON Objects from getSenateTransactions() & getHouseTransactions() into one large JSON Object.
 // VARS: Returns allTrades, a JSON Object containing all trades from both websites
 async function getAllTransactions(){
@@ -287,4 +293,235 @@ async function getAllTransactions(){
     const allTrades = senate[0].concat(house[0]);
 
     return await allTrades;
+}
+
+/****************************************************************
+*  Start of Alpha Vantage Functions 
+****************************************************************/
+
+/*
+*   FUNCTION: getStockSector()
+*   DESCRIPTION: Async function that uses Alpha Vantage to get a stock's sector
+*   PARAMETERS: 
+*       ticker: (String) The stock ticker (eg. for Apple, you pass in "AAPL")
+*       apiKey: (String) The Alpha Vantage api key as a string (eg. "ABC123")
+*   Return Value: (JSON) The stock's sector
+*       {
+*           sector: "NAME OF SECTOR"
+*       }
+*   // If something bad happened, then the JSON will be empty
+*/
+
+async function getStockSector(ticker, apiKey)
+{
+    let returnJSON = {};
+    return fetch("https://www.alphavantage.co/query?function=OVERVIEW&symbol=" + ticker + "&apikey=" + apiKey)
+    .then(result => result.json())
+    .then(apiData => {
+        //return apiData["Sector"];
+        returnJSON["sector"] = apiData["Sector"];
+        return returnJSON;
+    })
+    .catch(err => {
+        console.error(err);
+        return returnJSON;
+    });
+}
+
+/*
+*   FUNCTION: getFullStockHistory()
+*   DESCRIPTION: Async function that uses Alpha Vantage to get a stock's industry
+*   PARAMETERS: 
+*       ticker: (String) The stock ticker (eg. for Apple, you pass in "AAPL")
+*       apiKey: (String) The Alpha Vantage api key (eg. "ABC123")
+*   Return Value: (JSON) The stock's info for every day since listing date up to now
+*   {
+*       '2022-01-02': {
+*           '1. open': '123',
+*           '2. high': '162.21',
+*           '3. low': '156.72',
+*           '4. close': '156.8',
+*           '5. adjusted close': '156.8',
+*           '6. volume': '94232517',
+*           '7. dividend amount': '0.0000',
+*           '8. split coefficient': '1.0'
+*       },
+*       '2022-01-01': {
+*           '1. open': '123',
+*           '2. high': '162.21',
+*           '3. low': '156.72',
+*           '4. close': '156.8',
+*           '5. adjusted close': '156.8',
+*           '6. volume': '94232517',
+*           '7. dividend amount': '0.0000',
+*           '8. split coefficient': '1.0'
+*       },
+*       ... and so on
+*   }
+*   USED IN THESE FUNCTIONS:
+*       getAllStockClosingPrices()
+*       getStockPriceOnDate()
+*/
+
+async function getFullStockHistory(ticker, apiKey) 
+{
+    
+    // API call for stock data from past 100 days
+    // return fetch("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=" + ticker + "&apikey=" + apiKey)
+
+    // API call for all stock data (from listing date to now)
+    return fetch("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=" + ticker + "&outputsize=full&apikey=" + apiKey)
+    .then(result => result.json())
+    .then(apiData => {
+        return apiData["Time Series (Daily)"];
+    })
+    .catch(err => console.error(err));
+}
+
+/*
+*   FUNCTION: getAllStockClosingPrices()
+*   DESCRIPTION: Async function that uses Alpha Vantage to get a stock's closing price for all of the days it's been listed
+*   PARAMETERS:
+*       ticker: (String) The stock ticker (eg. for Apple, you pass in "AAPL")
+*       apiKey: (String) The Alpha Vantage api key (eg. "ABC123")
+*   Return Value: (JSON) Dates with the closing price of the stock, starting with most recent to oldest
+*   {
+*       '2022-04-26': '156.80',
+*       '2022-04-25': '162.88',
+*       '2022-04-22': '161.79',
+*       ... and so on
+*   }
+*   References:
+*       For info on how to iterate over JSON object: https://simplernerd.com/js-iterate-json/
+*       Get key names of JSON: https://stackoverflow.com/questions/38397894/get-json-key-name
+*   USES THESE FUNCTIONS:
+*       getFullStockHistory()
+*/
+
+async function getAllStockClosingPrices(ticker, apiKey)
+{
+    let returnJSON = {};
+    
+    // Wait for getFullStockHistory() to return JSON of all stock info
+    let allStockInfo = await getFullStockHistory(ticker, apiKey);
+    // Get all the dates
+    let allKeys = Object.keys(allStockInfo);
+    
+    // For each date, make a new entry in the JSON for that date with its closing price 
+    for (let i = 0; i < allKeys.length; i++)
+    {
+        returnJSON[allKeys[i]] = Object.values(allStockInfo)[i]["4. close"];
+    }
+    
+    return returnJSON;
+}
+
+/*
+*   FUNCTION: getStockPriceOnDate()
+*   DESCRIPTION: Async function that uses Alpha Vantage to get a stock's closing price for a specific date
+*   PARAMETERS:
+*       date: (String) The date you want the stock's closing price of 
+*           - Date must be in "yyyy-mm-dd" format (eg. "2022-04-23" would be April 23, 2022)
+*       ticker: (String) The stock ticker (eg. for Apple, you pass in "AAPL")
+*       apiKey: (String) The Alpha Vantage api key (eg. "ABC123")
+*   Return Value: (Number) or (Null) The stock price at the end of that day if it is a valid trading day, null if not
+*       - Does not return a JSON because it is a helper function for another function
+*   References:
+*       Uses method from: https://stackoverflow.com/questions/1098040/checking-if-a-key-exists-in-a-javascript-object
+*   USES THESE FUNCTIONS:
+*       getFullStockHistory()
+*   USED IN THESE FUNCTIONS:
+*       calculateUnrealizedGainsLosses()
+*/
+
+async function getStockPriceOnDate(date, ticker, apiKey)
+{
+    // Wait for getFullStockHistory() to return JSON of all stock info
+    let allStockInfo = await getFullStockHistory(ticker, apiKey);
+    if ([date] in allStockInfo)
+    {
+        return allStockInfo[date]["4. close"];
+    }
+    else
+    {
+        return null;
+    }
+}
+
+/*
+*   FUNCTION: getMostRecentClosingPrice()
+*   DESCRIPTION: Async function that uses Alpha Vantage API to get stock's most recent closing price
+*   PARAMETERS:
+*       ticker: (String) The stock ticker (eg. for Apple, you pass in "AAPL")
+*       apiKey: (String) The Alpha Vantage api key (eg. "ABC123")
+*   RETURN VALUE: (Number) The most recent stock closing price
+*       - Does not return a JSON because it is a helper function for another function
+*   USED IN THESE FUNCTIONS:
+*       calculateUnrealizedGainsLosses()
+*/
+
+async function getMostRecentClosingPrice(ticker, apiKey)
+{
+    const stringBeginningIndexAdjustment = 11; // "4. close: " takes up 11 chars before the actual price string
+    const stringEndIndexAdjustment = 3; // The price string ends 3 chars before "5. adjusted close"
+
+    return fetch("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=" + ticker + "&apikey=" + apiKey)
+    .then(result => result.json())
+    .then(apiData => {
+        // Take all stock info in its JSON form
+        let stockInfoJson = apiData["Time Series (Daily)"];
+        // Turn it from a JSON to a string
+        let stockInfoString = JSON.stringify(stockInfoJson);
+
+        // Parse the string so we only get the indices of the closing price string
+        let startOfClose = stockInfoString.indexOf("4. close");
+        let endOfClose = startOfClose + stringBeginningIndexAdjustment;
+        let startOfAdjustedClose = stockInfoString.indexOf("5. adjusted close") - stringEndIndexAdjustment;
+
+        let recentClosingPrice = Number(stockInfoString.substring(endOfClose, startOfAdjustedClose)); 
+        return recentClosingPrice;
+    })
+    .catch(err => console.error(err));
+}
+
+/*
+*   FUNCTION: calculateUnrealizedGainsLosses()
+*   DESCRIPTION: Async function that uses Alpha Vantage to get a stock's theoretical unrealized gains/losses based on buy date to now
+*   PARAMETERS:
+*       purchaseDate: (String) Date that the stock was purchased
+*           - YOU WANT TO PASS IN THE TRANSACTION DATE, NOT THE DISCLOSURE DATE
+*           - If date is in "mm/dd/yyyy" format, this function will change it so it is in "yyyy-mm-dd" format
+*       ticker: (String) The stock ticker (eg. for Apple, you pass in "AAPL")
+*       apiKey: (String) The Alpha Vantage api key (eg. "ABC123")
+*   Return Value: (JSON) unrealizedGainLoss will represent unrealized gain (positive value) or loss (negative value)
+*       {
+*           unrealizedGainLoss: '123'
+*       }
+*   USES THESE FUNCTIONS:
+*       getStockPriceOnDate()
+*       getMostRecentClosingPrice()
+*/
+
+async function calculateUnrealizedGainsLosses(purchaseDate, ticker, apiKey)
+{
+    let formattedDate = purchaseDate;
+
+    /*
+    * If statement is for if we need to convert the date -
+    * Old format: 01/31/2022 = datePart[0]/datePart[1]/datePart[2]
+    * Format we want: 2022-01-31 = datePart[2]-datePart[0]-datePart[1]
+    */
+    if (purchaseDate.includes("/"))
+    {
+        let dateParts = purchaseDate.split("/");
+        formattedDate = dateParts[2] + "-" + dateParts[0] + "-" + dateParts[1];
+    }
+
+    let purchasePrice = await getStockPriceOnDate(formattedDate, ticker, apiKey);
+    let latestClosingPrice = await getMostRecentClosingPrice(ticker, apiKey);
+
+    let returnJSON = {
+        "unrealizedGainLoss": latestClosingPrice - purchasePrice
+    };
+    return returnJSON;
 }
