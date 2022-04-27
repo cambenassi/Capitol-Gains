@@ -98,8 +98,8 @@ async function uniqueCongress() {
         console.log("Connecting...");
         var client = await connectToDB();
 
-        mongoRequest = await getMongoRequest(client);  // accessing the client, returns the mongoDB collections
-        uniqueCongressCollection = mongoRequest[2];  // gets index 2, which is the uniqueCongress collection data
+        mongoRequest = await getMongoRequest(client, "uniqueCongress");  // accessing the client, returns the mongoDB collections
+        uniqueCongressCollection = mongoRequest;  // gets index 2, which is the uniqueCongress collection data
         var uniqueCongress = await getUniqueCongress(uniqueCongressCollection);
 
     } catch (e) {
@@ -131,21 +131,14 @@ async function getUniqueCongress(uniqueCongressCollection) {
     CORE DATA REQUESTS: requests that will be used constantly to retrieve data from the APIs
 */
 
-/*
-DESCRIPTION:
-Async function, getMongoRequest, is a core request and returns the collections data in our mongoDB server.
-Collections in placed and return in an array variable.
-*/
-async function getMongoRequest(client) {
-    var mongoRequest = [];
-    var senateCollection = await client.db("senate-trades").collection("sen-" + getDate());  // gets senate stock watcher collection data
-    var houseCollection = await client.db("senate-trades").collection("house-" + getDate());  // gets house stock watcher collection data
-    var uniqueCongressCollection = await client.db("senate-trades").collection("uniqueCongress");  // gets uniqueCongress collection data
-    mongoRequest.push(senateCollection);
-    mongoRequest.push(houseCollection);
-    mongoRequest.push(uniqueCongressCollection);
+//DESCRIPTION: getMongoRequest is a core data request for our MongoDB database. This function will connect to our
+//datbase and return all data inside a desired collection.
+//VARS: client- live client object from connectToDB() function | collectionName- the name of the collection the user
+//wishes to access | mongoRequest- mongoRequest, a JSON object of your desired collection, is returned 
+async function getMongoRequest(client, collectionName) {
+    var mongoRequest = await client.db("senate-trades").collection(collectionName);
 
-    return mongoRequest;  // collection data is returned in an array
+    return mongoRequest; 
 }
 
 // DESCRIPTION: function that connects to MongoDB database & returns a client object
