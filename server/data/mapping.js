@@ -69,7 +69,8 @@ async function uniqueCongress() {
             var jsonData = {}
             id = id_count;
 
-            stockActName = uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName;  // reconnect mongoDB names to be used
+            // reconnect mongoDB names to be used
+            stockActName = (uniqueCongressNames[i].stockActFirstName + " " + uniqueCongressNames[i].stockActLastName).toLowerCase();
             console.log(stockActName);
             // getting politicianBio from proPublica using mongoDB names, and the propublica congress data
             politicianBio = await getPoliticianBio(stockActName, senate115, house115, senate116, house116, senate117, house117);
@@ -89,7 +90,7 @@ async function uniqueCongress() {
                 };
 
                 jsonData = {id, mapping};
-                await pushToDB(client, jsonData, "senate-trades", "TEST")
+                await pushToDB(client, jsonData, "alvinTest", "TEST")
                 uniqueCongress.push(jsonData);
                 id_count++;
             }
@@ -247,15 +248,11 @@ function getMemberID(stockActName, senate115, house115, senate116, house116, sen
     for (i=0; i < senate115.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (senate115[i].first_name == aName) {
+            if ((senate115[i].first_name).toLowerCase() == aName) {
                 matches++;
             }
 
-            if (senate115[i].middle_name == aName) {
-                matches++;
-            }
-
-            if (senate115[i].last_name == aName) {
+            if ((senate115[i].last_name).toLowerCase() == aName) {
                 matches++;
             }
 
@@ -270,15 +267,11 @@ function getMemberID(stockActName, senate115, house115, senate116, house116, sen
     for (i=0; i < house115.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (house115[i].first_name == aName) {
+            if ((house115[i].first_name).toLowerCase() == aName) {
                 matches++;
             }
 
-            if (house115[i].middle_name == aName) {
-                matches++;
-            }
-
-            if (house115[i].last_name == aName) {
+            if ((house115[i].last_name).toLowerCase() == aName) {
                 matches++;
             }
         })
@@ -292,15 +285,11 @@ function getMemberID(stockActName, senate115, house115, senate116, house116, sen
     for (i=0; i < senate116.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (senate116[i].first_name == aName) {
+            if ((senate116[i].first_name).toLowerCase() == aName) {
                 matches++;
             }
 
-            if (senate116[i].middle_name == aName) {
-                matches++;
-            }
-
-            if (senate116[i].last_name == aName) {
+            if ((senate116[i].last_name).toLowerCase() == aName) {
                 matches++;
             }
 
@@ -315,15 +304,11 @@ function getMemberID(stockActName, senate115, house115, senate116, house116, sen
     for (i=0; i < house116.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (house116[i].first_name == aName) {
+            if ((house116[i].first_name).toLowerCase() == aName) {
                 matches++;
             }
 
-            if (house116[i].middle_name == aName) {
-                matches++;
-            }
-
-            if (house116[i].last_name == aName) {
+            if ((house116[i].last_name).toLowerCase() == aName) {
                 matches++;
             }
 
@@ -338,15 +323,11 @@ function getMemberID(stockActName, senate115, house115, senate116, house116, sen
     for (i=0; i < senate117.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (senate117[i].first_name == aName) {
+            if ((senate117[i].first_name).toLowerCase() == aName) {
                 matches++;
             }
 
-            if (senate117[i].middle_name == aName) {
-                matches++;
-            }
-
-            if (senate117[i].last_name == aName) {
+            if ((senate117[i].last_name).toLowerCase() == aName) {
                 matches++;
             }
 
@@ -361,15 +342,11 @@ function getMemberID(stockActName, senate115, house115, senate116, house116, sen
     for (i=0; i < house117.length; i++) {
         matches = 0;
         stockActNameArr.forEach(aName => {
-            if (house117[i].first_name == aName) {
+            if ((house117[i].first_name).toLowerCase() == aName) {
                 matches++;
             }
 
-            if (house117[i].middle_name == aName) {
-                matches++;
-            }
-
-            if (house117[i].last_name == aName) {
+            if ((house117[i].last_name).toLowerCase() == aName) {
                 matches++;
             }
 
