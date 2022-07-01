@@ -46,7 +46,7 @@ export default function Politician() {
     {
       id: 1,
       date: '5/6/2021',
-      politician: <Link to={`/politician/${politician.id}`}> {politician.name}</Link>,
+      //politician: <Link to={`/politician/${politician.id}`}> {politician.name}</Link>,
       stock: 'TSLA',
       sector: 'Auto',
       buy_sell: 'Sell',
@@ -129,10 +129,6 @@ export default function Politician() {
       <h1 className='topmoverheader'></h1>
       <Tabs trades={trades}/>
     </div>
-<<<<<<< HEAD
-=======
-    <div className='footer'><p>@2022 Capitol Gains Inc. All Rights Reserved</p></div>
->>>>>>> e7649720... undo deleting everything
     </div>
     </>
   );
