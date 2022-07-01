@@ -19,7 +19,7 @@ export default function RecentTransactions() {
     {
       id: 1,
       date: '5/6/2021',
-      politician: <Link to={`/politician/3`}> Abraham</Link>,
+      //politician: <Link to={`/politician/3`}> Abraham</Link>,
       stock: 'TSLA',
       sector: 'Auto',
       buy_sell: 'Sell',
