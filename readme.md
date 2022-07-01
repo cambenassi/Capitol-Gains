@@ -14,8 +14,13 @@ We implemented the MERN stack for this project, meaning we used
 
 ### Team Responsibilities
 Cameron Benassi - Backend Developer  & Deployment 
+
 Ethan Yu - Backend Developer
+
 Tere Kwong - Frontend Developer
+
 Joshua Sullivan - Frontend Developer
+
 Brandon  Swanberg - Visualizations and Graphs
+
 Alvin Tran - Visualizations and Graphs
